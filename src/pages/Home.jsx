@@ -95,7 +95,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
     <div className="min-h-screen bg-bg">
       <Header title="TrackDeni" actions={headerActions} />
       
-      <div className="max-w-md mx-auto p-4 space-y-6">
+      <div className="max-w-md lg:max-w-2xl mx-auto p-4 space-y-6">
         {/* Summary Stats */}
         <div className="card">
           <h2 className="font-semibold text-lg mb-4">Overview</h2>

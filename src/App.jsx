@@ -16,10 +16,15 @@ function App() {
     setCurrentPage('add-debt')
   }
 
-  const navigateToCustomer = (customer) => {
-    // For now, we'll navigate to add debt for this customer
-    // In the future, this could go to a customer detail page
-    navigateToAddDebt(customer.id)
+  const navigateToCustomer = (customer, action = 'view') => {
+    if (action === 'add-debt') {
+      // Navigate to add debt for this specific customer
+      navigateToAddDebt(customer.id)
+    } else {
+      // For now, clicking the card also goes to add debt
+      // In the future, this could go to a customer detail page
+      navigateToAddDebt(customer.id)
+    }
   }
 
   const handleDebtSuccess = (customerId) => {

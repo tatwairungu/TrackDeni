@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
+import PaymentModal from './PaymentModal'
 
 const CustomerCard = ({ customer, onClick }) => {
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedDebt, setSelectedDebt] = useState(null)
   const { getCustomerDebtSummary } = useDebtStore()
   const summary = getCustomerDebtSummary(customer.id)
   
@@ -42,6 +46,15 @@ const CustomerCard = ({ customer, onClick }) => {
     const encodedMessage = encodeURIComponent(message)
     const smsUrl = `sms:${customer.phone}?body=${encodedMessage}`
     window.open(smsUrl)
+  }
+
+  const handleRecordPayment = (e) => {
+    e.stopPropagation() // Prevent card click
+    
+    if (urgentDebt) {
+      setSelectedDebt(urgentDebt)
+      setShowPaymentModal(true)
+    }
   }
 
   return (
@@ -104,23 +117,47 @@ const CustomerCard = ({ customer, onClick }) => {
       )}
 
       {/* Actions */}
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        {urgentDebt && (
+          <button
+            onClick={handleRecordPayment}
+            className="bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 transition-colors"
+          >
+            Pay
+          </button>
+        )}
         <button
           onClick={handleSendSMS}
-          className="flex-1 bg-accent text-white py-2 px-3 rounded-lg font-medium text-sm hover:bg-accent/90 transition-colors"
+          className={`bg-accent text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-accent/90 transition-colors ${
+            !urgentDebt ? 'col-span-2' : ''
+          }`}
         >
-          Send Reminder
+          SMS
         </button>
         <button
           onClick={(e) => {
             e.stopPropagation()
-            // TODO: Navigate to add debt for this customer
+            // Navigate to add debt for this customer
+            if (onClick) {
+              onClick(customer, 'add-debt')
+            }
           }}
-          className="bg-gray-100 text-gray-700 py-2 px-3 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
+          className="bg-gray-100 text-gray-700 py-2 px-2 rounded-lg font-medium text-xs hover:bg-gray-200 transition-colors"
         >
-          Add Debt
+          Add
         </button>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        customer={customer}
+        debt={selectedDebt}
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false)
+          setSelectedDebt(null)
+        }}
+      />
     </div>
   )
 }
