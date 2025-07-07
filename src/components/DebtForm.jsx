@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { getTodayDate, addDays } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
 
+// Helper function to safely parse monetary amounts (fixes floating point precision)
+const parseMonetaryAmount = (amount) => {
+  return Math.round(parseFloat(amount) * 100) / 100
+}
+
 const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
   const { addCustomer, addDebt, customers } = useDebtStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -47,7 +52,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
     }
 
     // Debt validation
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+    if (!formData.amount || parseMonetaryAmount(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0'
     }
     if (!formData.reason.trim()) {

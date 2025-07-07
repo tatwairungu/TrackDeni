@@ -58,12 +58,12 @@ const CustomerCard = ({ customer, onClick }) => {
   }
 
   return (
-    <div 
-      className="card hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => onClick && onClick(customer)}
-    >
-      {/* Header with name and status */}
-      <div className="flex items-start justify-between mb-3">
+    <div className="card hover:shadow-lg transition-shadow">
+      {/* Header with name and status - Clickable area */}
+      <div 
+        className="flex items-start justify-between mb-3 cursor-pointer rounded-lg p-2 -m-2 hover:bg-gray-50 transition-colors"
+        onClick={() => onClick && onClick(customer)}
+      >
         <div className="flex-1">
           <h3 className="font-semibold text-lg text-text mb-1">{customer.name}</h3>
           {customer.phone && (

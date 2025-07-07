@@ -1,0 +1,274 @@
+import { useState } from 'react'
+import Header from '../components/Header'
+import PaymentModal from '../components/PaymentModal'
+import useDebtStore from '../store/useDebtStore'
+import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
+
+const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
+  const { customers, getCustomerDebtSummary } = useDebtStore()
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedDebt, setSelectedDebt] = useState(null)
+  const [paymentMode, setPaymentMode] = useState('single') // single or multiple
+  
+  const customer = customers.find(c => c.id === customerId)
+  
+  if (!customer) {
+    return (
+      <div className="min-h-screen bg-bg">
+        <Header title="Customer Not Found" showBack={true} onBack={onBack} />
+        <div className="max-w-md lg:max-w-2xl mx-auto p-4">
+          <div className="card text-center">
+            <p className="text-gray-600">Customer not found.</p>
+            <button onClick={onBack} className="btn-primary mt-4">
+              Go Back
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const summary = getCustomerDebtSummary(customerId)
+  const activeDebts = customer.debts.filter(debt => !debt.paid)
+  const paidDebts = customer.debts.filter(debt => debt.paid)
+
+  const handleSendSMS = () => {
+    if (!customer.phone) {
+      alert('No phone number available for this customer')
+      return
+    }
+    
+    const totalOwed = summary.totalOwed
+    const message = totalOwed > 0 
+      ? `Hi ${customer.name}, you have a total outstanding balance of KES ${totalOwed.toLocaleString()} across ${summary.activeDebts} debt${summary.activeDebts > 1 ? 's' : ''}. Please arrange payment. Thank you!`
+      : `Hi ${customer.name}, thank you for keeping your account current!`
+    
+    const encodedMessage = encodeURIComponent(message)
+    const smsUrl = `sms:${customer.phone}?body=${encodedMessage}`
+    window.open(smsUrl)
+  }
+
+  const handlePayDebt = (debt) => {
+    setSelectedDebt(debt)
+    setPaymentMode('single')
+    setShowPaymentModal(true)
+  }
+
+  const handlePayAll = () => {
+    setSelectedDebt(null) // null means pay all
+    setPaymentMode('multiple')
+    setShowPaymentModal(true)
+  }
+
+  const headerActions = [
+    {
+      label: 'Add Debt',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      ),
+      variant: 'primary',
+      onClick: () => onNavigateToAddDebt(customerId)
+    }
+  ]
+
+  return (
+    <div className="min-h-screen bg-bg">
+      <Header 
+        title={customer.name} 
+        showBack={true} 
+        onBack={onBack}
+        actions={headerActions}
+      />
+      
+      <div className="max-w-md lg:max-w-2xl mx-auto p-4 space-y-6">
+        {/* Customer Info */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-text">{customer.name}</h2>
+              {customer.phone && <p className="text-gray-600">{customer.phone}</p>}
+              <p className="text-xs text-gray-500">
+                Customer since {formatDate(customer.createdAt)}
+              </p>
+            </div>
+            <button
+              onClick={handleSendSMS}
+              className="bg-accent text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-accent/90 transition-colors"
+            >
+              Send SMS
+            </button>
+          </div>
+
+          {/* Summary */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 bg-danger/10 rounded-lg">
+              <p className="text-xl font-bold text-danger">
+                KES {summary.totalOwed.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-600">Total Owed</p>
+            </div>
+            <div className="text-center p-3 bg-success/10 rounded-lg">
+              <p className="text-xl font-bold text-success">
+                KES {summary.totalPaid.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-600">Total Paid</p>
+            </div>
+            <div className="text-center p-3 bg-primary/10 rounded-lg">
+              <p className="text-xl font-bold text-primary">
+                {summary.activeDebts}
+              </p>
+              <p className="text-xs text-gray-600">Active Debts</p>
+            </div>
+          </div>
+
+          {/* Pay All Button */}
+          {summary.totalOwed > 0 && (
+            <button
+              onClick={handlePayAll}
+              className="w-full mt-4 bg-success text-white py-3 rounded-lg font-medium hover:bg-success/90 transition-colors"
+            >
+              Pay All Outstanding (KES {summary.totalOwed.toLocaleString()})
+            </button>
+          )}
+        </div>
+
+        {/* Active Debts */}
+        {activeDebts.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-text">Outstanding Debts</h3>
+            {activeDebts.map(debt => {
+              const totalPaid = debt.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0
+              const remaining = debt.amount - totalPaid
+              const status = getDebtStatus(debt.dueDate, debt.paid)
+              const statusColor = getStatusColor(status)
+
+              return (
+                <div key={debt.id} className="card">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-text">{debt.reason}</h4>
+                      <p className="text-sm text-gray-600">
+                        Borrowed: {formatDate(debt.dateBorrowed)}
+                      </p>
+                    </div>
+                    <span className={`badge-${statusColor} shrink-0`}>
+                      {getStatusText(debt.dueDate, debt.paid)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 mb-3">
+                    <div className="text-center">
+                      <p className="font-bold text-text">KES {debt.amount.toLocaleString()}</p>
+                      <p className="text-xs text-gray-600">Original</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold text-success">KES {totalPaid.toLocaleString()}</p>
+                      <p className="text-xs text-gray-600">Paid</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold text-danger">KES {remaining.toLocaleString()}</p>
+                      <p className="text-xs text-gray-600">Remaining</p>
+                    </div>
+                  </div>
+
+                  {/* Payment History */}
+                  {debt.payments && debt.payments.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-gray-700 mb-1">Payment History:</p>
+                      <div className="space-y-1">
+                        {debt.payments.slice(-2).map((payment, index) => (
+                          <div key={index} className="flex justify-between text-xs text-gray-600">
+                            <div className="flex items-center gap-1">
+                              <span>{formatDateShort(payment.date)}</span>
+                              {payment.source === 'overpayment_auto_clear' && (
+                                <span className="text-blue-600 font-medium">(Auto-cleared)</span>
+                              )}
+                            </div>
+                            <span>KES {payment.amount.toLocaleString()}</span>
+                          </div>
+                        ))}
+                        {debt.payments.length > 2 && (
+                          <p className="text-xs text-gray-500">
+                            +{debt.payments.length - 2} more payment{debt.payments.length - 2 > 1 ? 's' : ''}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => handlePayDebt(debt)}
+                    className="w-full bg-primary text-white py-2 rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Paid Debts */}
+        {paidDebts.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-600">Paid Debts</h3>
+            {paidDebts.slice(-3).map(debt => (
+              <div key={debt.id} className="card bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium text-gray-700">{debt.reason}</h4>
+                    <p className="text-sm text-gray-600">
+                      KES {debt.amount.toLocaleString()} • {formatDate(debt.dateBorrowed)}
+                    </p>
+                  </div>
+                  <span className="badge-success">Paid</span>
+                </div>
+              </div>
+            ))}
+            {paidDebts.length > 3 && (
+              <p className="text-sm text-gray-500 text-center">
+                +{paidDebts.length - 3} more paid debt{paidDebts.length - 3 > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* No Debts State */}
+        {customer.debts.length === 0 && (
+          <div className="card text-center py-8">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <h4 className="font-medium text-gray-900 mb-2">No debts recorded</h4>
+            <p className="text-gray-600 mb-4">This customer hasn't borrowed anything yet.</p>
+            <button
+              onClick={() => onNavigateToAddDebt(customerId)}
+              className="btn-primary"
+            >
+              Add First Debt
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        customer={customer}
+        debt={selectedDebt}
+        allDebts={paymentMode === 'multiple' ? activeDebts : null}
+        isOpen={showPaymentModal}
+        onClose={() => {
+          setShowPaymentModal(false)
+          setSelectedDebt(null)
+          setPaymentMode('single')
+        }}
+      />
+    </div>
+  )
+}
+
+export default CustomerDetail 
