@@ -87,7 +87,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
         </svg>
       ),
       variant: 'primary',
-      onClick: onNavigateToAddDebt
+      onClick: () => onNavigateToAddDebt()
     }
   ]
 
@@ -179,7 +179,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
                   <h4 className="font-medium text-gray-900 mb-2">No customers yet</h4>
                   <p className="text-gray-600 mb-4">Start by adding your first customer and their debt.</p>
                   <button
-                    onClick={onNavigateToAddDebt}
+                    onClick={() => onNavigateToAddDebt()}
                     className="btn-primary"
                   >
                     Add First Customer
@@ -220,7 +220,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
         {customers.length > 0 && (
           <div className="sticky bottom-4">
             <button
-              onClick={onNavigateToAddDebt}
+              onClick={() => onNavigateToAddDebt()}
               className="w-full btn-primary py-4 text-lg shadow-lg"
             >
               Add New Debt

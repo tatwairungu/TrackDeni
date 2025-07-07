@@ -140,7 +140,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h2 className="text-xl font-semibold text-text mb-4">
-        {isNewCustomer ? 'Add New Customer & Debt' : `Add Debt for ${existingCustomer?.name}`}
+        {isNewCustomer ? 'Add New Customer & Debt' : `Add Debt for ${existingCustomer?.name || 'Customer'}`}
       </h2>
 
       {/* Customer Information (only for new customers) */}
