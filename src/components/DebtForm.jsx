@@ -7,7 +7,7 @@ const parseMonetaryAmount = (amount) => {
   return Math.round(parseFloat(amount) * 100) / 100
 }
 
-const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
+const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutorial }) => {
   const { addCustomer, addDebt, customers } = useDebtStore()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
@@ -143,7 +143,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} data-tutorial="customer-form" className="space-y-4">
       <h2 className="text-xl font-semibold text-text mb-4">
         {isNewCustomer ? 'Add New Customer & Debt' : `Add Debt for ${existingCustomer?.name || 'Customer'}`}
       </h2>

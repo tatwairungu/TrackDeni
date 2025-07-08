@@ -3,7 +3,7 @@ import useDebtStore from '../store/useDebtStore'
 import CustomerCard from '../components/CustomerCard'
 import Header from '../components/Header'
 
-const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
+const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
   const { customers, getTotalOwed, getTotalPaid, clearAllData } = useDebtStore()
   const [filter, setFilter] = useState('all') // all, overdue, due-soon, paid
 
@@ -119,6 +119,9 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
     if (confirmed) {
       clearAllData()
       alert('All data has been cleared successfully.')
+      
+      // Handle tutorial progression
+      tutorial?.onClearDataClicked()
     }
   }
 

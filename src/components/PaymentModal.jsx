@@ -7,7 +7,7 @@ const parseMonetaryAmount = (amount) => {
   return Math.round(parseFloat(amount) * 100) / 100
 }
 
-const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose }) => {
+const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) => {
   const { addPayment, markDebtAsPaid } = useDebtStore()
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentType, setPaymentType] = useState('partial') // partial or full
@@ -81,6 +81,9 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose }) => {
       setPaymentAmount('')
       setPaymentType('partial')
       onClose()
+      
+      // Handle tutorial progression
+      tutorial?.onPaymentSubmitted()
     } catch (err) {
       setError('Failed to record payment. Please try again.')
     } finally {
@@ -184,7 +187,7 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} data-tutorial="payment-modal" className="space-y-4">
           {/* Payment Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>

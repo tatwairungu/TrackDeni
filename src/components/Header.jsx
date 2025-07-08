@@ -52,6 +52,7 @@ const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], o
               <button
                 key={index}
                 onClick={action.onClick}
+                data-tutorial="add-debt-button"
                 className={`p-2 rounded-lg transition-colors ${
                   action.variant === 'primary' 
                     ? 'bg-primary text-white hover:bg-primary/90' 
@@ -66,6 +67,7 @@ const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], o
             {/* Menu button */}
             <button
               onClick={() => setShowMenu(!showMenu)}
+              data-tutorial="menu-button"
               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
               aria-label="Menu"
             >

@@ -3,22 +3,22 @@ import Home from './pages/Home'
 import AddDebt from './pages/AddDebt'
 import CustomerDetail from './pages/CustomerDetail'
 import OnboardingFlow from './components/OnboardingFlow'
-import TutorialOverlay from './components/TutorialOverlay'
+import InteractiveTutorial from './components/InteractiveTutorial'
+import { useTutorial } from './hooks/useTutorial'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
   const [selectedCustomerId, setSelectedCustomerId] = useState(null)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const [showTutorial, setShowTutorial] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Check if user has seen onboarding and tutorial
+  // Interactive tutorial hook
+  const tutorial = useTutorial()
+
+  // Check if user has seen onboarding
   useEffect(() => {
     const hasSeenIntro = localStorage.getItem('hasSeenIntro')
-    const shouldShowTutorial = localStorage.getItem('shouldShowTutorial')
-    
     setShowOnboarding(!hasSeenIntro)
-    setShowTutorial(!!shouldShowTutorial)
     setIsLoading(false)
   }, [])
 
@@ -30,6 +30,8 @@ function App() {
   const navigateToAddDebt = (customerId = null) => {
     setSelectedCustomerId(customerId)
     setCurrentPage('add-debt')
+    // Handle tutorial progression
+    tutorial.onAddButtonClicked()
   }
 
   const navigateToCustomer = (customer, action = 'view') => {
@@ -44,6 +46,8 @@ function App() {
   }
 
   const handleDebtSuccess = (customerId) => {
+    // Handle tutorial progression
+    tutorial.onCustomerFormSubmitted(customerId)
     // Navigate back to home after successful debt creation
     navigateToHome()
   }
@@ -53,12 +57,8 @@ function App() {
     // Check if tutorial should be shown after onboarding
     const shouldShowTutorial = localStorage.getItem('shouldShowTutorial')
     if (shouldShowTutorial) {
-      setShowTutorial(true)
+      tutorial.startTutorial()
     }
-  }
-
-  const handleTutorialComplete = () => {
-    setShowTutorial(false)
   }
 
   const renderCurrentPage = () => {
@@ -69,6 +69,7 @@ function App() {
             customerId={selectedCustomerId}
             onBack={navigateToHome}
             onSuccess={handleDebtSuccess}
+            tutorial={tutorial}
           />
         )
       case 'customer-detail':
@@ -77,6 +78,7 @@ function App() {
             customerId={selectedCustomerId}
             onBack={navigateToHome}
             onNavigateToAddDebt={navigateToAddDebt}
+            tutorial={tutorial}
           />
         )
       case 'home':
@@ -85,6 +87,7 @@ function App() {
           <Home
             onNavigateToAddDebt={navigateToAddDebt}
             onNavigateToCustomer={navigateToCustomer}
+            tutorial={tutorial}
           />
         )
     }
@@ -109,12 +112,15 @@ function App() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />
   }
 
-  // Show main app with tutorial overlay if needed
+  // Show main app with interactive tutorial if needed
   return (
     <div className="relative">
       {renderCurrentPage()}
-      {showTutorial && (
-        <TutorialOverlay onComplete={handleTutorialComplete} />
+      {tutorial.isActive && (
+        <InteractiveTutorial 
+          currentStep={tutorial.currentStep}
+          onComplete={tutorial.completeTutorial}
+        />
       )}
     </div>
   )

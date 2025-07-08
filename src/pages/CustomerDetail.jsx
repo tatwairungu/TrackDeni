@@ -4,7 +4,7 @@ import PaymentModal from '../components/PaymentModal'
 import useDebtStore from '../store/useDebtStore'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
 
-const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
+const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) => {
   const { customers, getCustomerDebtSummary, clearAllData } = useDebtStore()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
@@ -52,6 +52,8 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
     setSelectedDebt(debt)
     setPaymentMode('single')
     setShowPaymentModal(true)
+    // Handle tutorial progression
+    tutorial?.onRecordPaymentClicked()
   }
 
   const handlePayAll = () => {
@@ -247,6 +249,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
 
                   <button
                     onClick={() => handlePayDebt(debt)}
+                    data-tutorial="record-payment-button"
                     className="w-full bg-primary text-white py-2 rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
                   >
                     Record Payment
@@ -311,6 +314,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
         debt={selectedDebt}
         allDebts={paymentMode === 'multiple' ? activeDebts : null}
         isOpen={showPaymentModal}
+        tutorial={tutorial}
         onClose={() => {
           setShowPaymentModal(false)
           setSelectedDebt(null)

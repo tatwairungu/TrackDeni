@@ -49,7 +49,30 @@ export const translations = {
       step4: {
         title: 'You\'re All Set!',
         description: 'You now know how to track debts and payments. Start managing your business!'
-      }
+      },
+      interactive: {
+        step1: {
+          title: 'Click the + Button',
+          description: 'Tap the green + button in the top right corner to add your first customer and debt.'
+        },
+        step2: {
+          title: 'Fill Customer Details',
+          description: 'Enter the customer\'s name, phone number, debt amount, and what they borrowed. Then click Save.'
+        },
+        step3: {
+          title: 'Record a Payment',
+          description: 'Now click "Record Payment" to mark that the customer has paid some money.'
+        },
+        step4: {
+          title: 'Mark as Paid',
+          description: 'Enter a payment amount and click the payment button to record it.'
+        },
+        step5: {
+          title: 'Clear the Data',
+          description: 'Click the menu (⋮) button and select "Clear All Data" to reset for fresh start.'
+        }
+      },
+      complete: 'Complete Tutorial'
     },
     
     // Navigation
@@ -117,7 +140,30 @@ export const translations = {
       step4: {
         title: 'Umekwisha Tayari!',
         description: 'Sasa unajua jinsi ya kufuatilia madeni na malipo. Anza kusimamia biashara yako!'
-      }
+      },
+      interactive: {
+        step1: {
+          title: 'Bonyeza Kitufe cha +',
+          description: 'Bonyeza kitufe cha kijani + upande wa juu kulia kuongeza mteja wako wa kwanza na deni.'
+        },
+        step2: {
+          title: 'Jaza Maelezo ya Mteja',
+          description: 'Ingiza jina la mteja, nambari ya simu, kiasi cha deni, na alichokopa. Kisha bonyeza Hifadhi.'
+        },
+        step3: {
+          title: 'Rekodi Malipo',
+          description: 'Sasa bonyeza "Rekodi Malipo" kuashiria kwamba mteja amelipa pesa fulani.'
+        },
+        step4: {
+          title: 'Weka Kuwa Amelipa',
+          description: 'Ingiza kiasi cha malipo na bonyeza kitufe cha malipo kurekodi.'
+        },
+        step5: {
+          title: 'Safisha Data',
+          description: 'Bonyeza kitufe cha menyu (⋮) na chagua "Futa Data Zote" kuanza upya.'
+        }
+      },
+      complete: 'Maliza Mafunzo'
     },
     
     // Navigation
