@@ -101,7 +101,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
 
       // Add debt to customer
       addDebt(customerIdToUse, {
-        amount: formData.amount,
+        amount: parseMonetaryAmount(formData.amount),
         reason: formData.reason.trim(),
         dateBorrowed: formData.dateBorrowed,
         dueDate: formData.dueDate

@@ -16,7 +16,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
     if (filter === 'all') return customers
 
     return customers.filter(customer => {
-      const activeDebts = customer.debts.filter(debt => !debt.paid)
+      const activeDebts = customer.debts.filter(debt => !debt.paid && debt.amount > 0) // Exclude credit entries
       
       if (filter === 'paid') {
         return activeDebts.length === 0 && customer.debts.length > 0
@@ -49,7 +49,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
     }
 
     customers.forEach(customer => {
-      const activeDebts = customer.debts.filter(debt => !debt.paid)
+      const activeDebts = customer.debts.filter(debt => !debt.paid && debt.amount > 0) // Exclude credit entries
       
       if (activeDebts.length === 0 && customer.debts.length > 0) {
         counts.paid++

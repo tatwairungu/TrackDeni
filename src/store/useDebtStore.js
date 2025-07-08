@@ -69,10 +69,10 @@ const useDebtStore = create(
 
           // Calculate remaining amount needed for this debt
           const totalPaid = getTotalPaid(debt.payments)
-          const remainingOnDebt = Math.max(0, debt.amount - totalPaid)
+          const remainingOnDebt = parseMonetaryAmount(Math.max(0, debt.amount - totalPaid))
           
           // Check if there's an overpayment
-          const overpaymentAmount = Math.max(0, payment.amount - remainingOnDebt)
+          const overpaymentAmount = parseMonetaryAmount(Math.max(0, payment.amount - remainingOnDebt))
           
           // Update the specific debt with payment
           let updatedCustomer = {
@@ -95,7 +95,7 @@ const useDebtStore = create(
               .filter(d => d.id !== debtId && d.amount > 0 && !d.paid)
               .map(d => ({
                 ...d,
-                remaining: Math.max(0, d.amount - getTotalPaid(d.payments))
+                remaining: parseMonetaryAmount(Math.max(0, d.amount - getTotalPaid(d.payments)))
               }))
               .filter(d => d.remaining > 0)
               .sort((a, b) => {
@@ -116,12 +116,12 @@ const useDebtStore = create(
               const outstandingDebt = outstandingDebts.find(od => od.id === d.id)
               if (!outstandingDebt || remainingOverpayment <= 0) return d
 
-              const amountToApply = Math.min(remainingOverpayment, outstandingDebt.remaining)
-              remainingOverpayment -= amountToApply
+              const amountToApply = parseMonetaryAmount(Math.min(remainingOverpayment, outstandingDebt.remaining))
+              remainingOverpayment = parseMonetaryAmount(remainingOverpayment - amountToApply)
 
               // Add automatic payment for debt clearing
               const autoPayment = {
-                amount: amountToApply,
+                amount: parseMonetaryAmount(amountToApply),
                 date: new Date().toISOString(),
                 source: 'overpayment_auto_clear'
               }
@@ -139,7 +139,7 @@ const useDebtStore = create(
             if (remainingOverpayment > 0) {
               const creditEntry = {
                 id: uuidv4(),
-                amount: -remainingOverpayment, // Negative amount for credit
+                amount: -parseMonetaryAmount(remainingOverpayment), // Negative amount for credit
                 reason: 'Store Credit (Overpayment)',
                 dateBorrowed: new Date().toISOString(),
                 dueDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
@@ -219,7 +219,11 @@ const useDebtStore = create(
         const state = get()
         return state.customers.reduce((total, customer) => {
           return total + customer.debts.reduce((customerTotal, debt) => {
-            return customerTotal + getTotalPaid(debt.payments)
+            // Only count actual customer payments, not auto-clearing redistributions
+            const actualCustomerPayments = debt.payments
+              .filter(p => p.source !== 'overpayment_auto_clear')
+              .reduce((sum, p) => sum + p.amount, 0)
+            return customerTotal + actualCustomerPayments
           }, 0)
         }, 0)
       },
@@ -231,6 +235,10 @@ const useDebtStore = create(
 
         const summary = customer.debts.reduce((acc, debt) => {
           const totalPaid = getTotalPaid(debt.payments)
+          // Only count actual customer payments, not auto-clearing redistributions
+          const actualCustomerPayments = debt.payments
+            .filter(p => p.source !== 'overpayment_auto_clear')
+            .reduce((sum, p) => sum + p.amount, 0)
           
           if (debt.amount < 0) {
             // This is a credit entry
@@ -238,7 +246,7 @@ const useDebtStore = create(
           } else {
             // Regular debt
             const remaining = debt.amount - totalPaid
-            acc.totalPaid += totalPaid
+            acc.totalPaid += actualCustomerPayments // Only count actual payments
             
             if (!debt.paid && remaining > 0) {
               acc.totalOwed += remaining
