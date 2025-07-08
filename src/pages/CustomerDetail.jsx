@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import Header from '../components/Header'
 import PaymentModal from '../components/PaymentModal'
+import ConfirmationDialog from '../components/ConfirmationDialog'
 import useDebtStore from '../store/useDebtStore'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
 
 const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) => {
-  const { customers, getCustomerDebtSummary, clearAllData } = useDebtStore()
+  const { customers, getCustomerDebtSummary, clearAllData, deleteDebt } = useDebtStore()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const [paymentMode, setPaymentMode] = useState('single') // single or multiple
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [debtToDelete, setDebtToDelete] = useState(null)
   
   const customer = customers.find(c => c.id === customerId)
   
@@ -58,6 +61,24 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
     setSelectedDebt(null) // null means pay all
     setPaymentMode('multiple')
     setShowPaymentModal(true)
+  }
+
+  const handleDeleteDebt = (debt) => {
+    setDebtToDelete(debt)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteDebt = () => {
+    if (debtToDelete) {
+      deleteDebt(customerId, debtToDelete.id)
+      setShowDeleteDialog(false)
+      setDebtToDelete(null)
+    }
+  }
+
+  const cancelDeleteDebt = () => {
+    setShowDeleteDialog(false)
+    setDebtToDelete(null)
   }
 
   // Menu action handlers
@@ -200,9 +221,20 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
                         Borrowed: {formatDate(debt.dateBorrowed)}
                       </p>
                     </div>
-                    <span className={`badge-${statusColor} shrink-0`}>
-                      {getStatusText(debt.dueDate, debt.paid)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`badge-${statusColor} shrink-0`}>
+                        {getStatusText(debt.dueDate, debt.paid)}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteDebt(debt)}
+                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Delete debt"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4 mb-3">
@@ -273,7 +305,18 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
                       KES {debt.amount.toLocaleString()} • {formatDate(debt.dateBorrowed)}
                     </p>
                   </div>
-                  <span className="badge-success">Paid</span>
+                  <div className="flex items-center gap-2">
+                    <span className="badge-success">Paid</span>
+                    <button
+                      onClick={() => handleDeleteDebt(debt)}
+                      className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                      title="Delete debt"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
               ))}
@@ -318,6 +361,26 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
           setSelectedDebt(null)
           setPaymentMode('single')
         }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteDialog}
+        onClose={cancelDeleteDebt}
+        onConfirm={confirmDeleteDebt}
+        title="Delete Debt"
+        message="Are you sure you want to delete this debt? This will remove all payment history associated with it."
+        details={debtToDelete ? [
+          { label: "Debt", value: debtToDelete.reason },
+          { label: "Amount", value: `KES ${debtToDelete.amount.toLocaleString()}` },
+          { label: "Date", value: formatDate(debtToDelete.dateBorrowed) },
+          ...(debtToDelete.payments && debtToDelete.payments.length > 0 ? [
+            { label: "Payments", value: `KES ${debtToDelete.payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()} (${debtToDelete.payments.length} payment${debtToDelete.payments.length > 1 ? 's' : ''})` }
+          ] : [])
+        ] : []}
+        confirmText="Delete Debt"
+        cancelText="Cancel"
+        type="danger"
       />
     </div>
   )
