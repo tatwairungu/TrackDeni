@@ -5,6 +5,7 @@ import CustomerDetail from './pages/CustomerDetail'
 import OnboardingFlow from './components/OnboardingFlow'
 import InteractiveTutorial from './components/InteractiveTutorial'
 import { useTutorial } from './hooks/useTutorial'
+import useDebtStore from './store/useDebtStore'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
@@ -20,6 +21,81 @@ function App() {
     const hasSeenIntro = localStorage.getItem('hasSeenIntro')
     setShowOnboarding(!hasSeenIntro)
     setIsLoading(false)
+  }, [])
+
+  // Development tools for testing
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const store = useDebtStore.getState()
+      
+      window.trackDeniDev = {
+        // Show upgrade prompt
+        showUpgrade: () => {
+          store.showUpgradeModal()
+          console.log('🔄 Upgrade prompt shown')
+        },
+        
+        // Add test customers
+        addTestCustomers: (count = 5) => {
+          const testCustomers = [
+            { name: 'John Doe', phone: '0712345678', location: 'Nairobi CBD' },
+            { name: 'Jane Smith', phone: '0723456789', location: 'Westlands' },
+            { name: 'Peter Kimani', phone: '0734567890', location: 'Kasarani' },
+            { name: 'Mary Wanjiku', phone: '0745678901', location: 'Thika Road' },
+            { name: 'David Mwangi', phone: '0756789012', location: 'Kiambu' },
+            { name: 'Grace Achieng', phone: '0767890123', location: 'South B' },
+            { name: 'Samuel Kiptoo', phone: '0778901234', location: 'Ngong' },
+            { name: 'Rose Nyambura', phone: '0789012345', location: 'Ruaka' }
+          ]
+          
+          for (let i = 0; i < Math.min(count, testCustomers.length); i++) {
+            store.addCustomer(testCustomers[i])
+          }
+          console.log(`➕ Added ${Math.min(count, testCustomers.length)} test customers`)
+        },
+        
+        // Complete test scenario
+        testUpgradeFlow: () => {
+          // Add 5 customers to hit the limit
+          window.trackDeniDev.addTestCustomers(5)
+          // Show upgrade prompt
+          setTimeout(() => {
+            store.showUpgradeModal()
+            console.log('🧪 Test flow: 5 customers added, upgrade prompt shown')
+          }, 500)
+        },
+        
+        // Direct upgrade to Pro
+        upgradeToPro: () => {
+          store.upgradeToProTier()
+          console.log('⬆️ Upgraded to Pro tier')
+        },
+        
+        // Reset to free tier
+        resetToFree: () => {
+          store.resetToFreeTier()
+          console.log('🔄 Reset to free tier')
+        },
+        
+        // Show current state
+        showState: () => {
+          const state = store.getState()
+          console.log('📊 Current state:', {
+            customers: state.customers.length,
+            userTier: state.userTier,
+            canAddMore: state.canAddCustomer()
+          })
+        }
+      }
+      
+      console.log('🛠️ TrackDeni Dev Tools Available:')
+      console.log('  trackDeniDev.showUpgrade() - Show upgrade prompt')
+      console.log('  trackDeniDev.addTestCustomers(5) - Add test customers')
+      console.log('  trackDeniDev.testUpgradeFlow() - Complete test scenario')
+      console.log('  trackDeniDev.upgradeToPro() - Direct upgrade')
+      console.log('  trackDeniDev.resetToFree() - Reset for testing')
+      console.log('  trackDeniDev.showState() - Show current state')
+    }
   }, [])
 
   const navigateToHome = () => {

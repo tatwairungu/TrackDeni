@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 
+// Free tier constants
+const FREE_TIER_LIMIT = 5
+
 const useDebtStore = create(
   persist(
     (set, get) => ({
@@ -11,9 +14,25 @@ const useDebtStore = create(
       // UI state
       isLoading: false,
       error: null,
+      
+      // Free tier state
+      userTier: 'free', // 'free' or 'pro'
+      showUpgradePrompt: false,
+      showProWelcome: false,
 
       // Actions
       addCustomer: (customerData) => {
+        const state = get()
+        
+        // Check free tier limit
+        if (state.userTier === 'free' && state.customers.length >= FREE_TIER_LIMIT) {
+          set({ 
+            error: 'Free tier limit reached. Upgrade to Pro to add more customers.',
+            showUpgradePrompt: true 
+          })
+          return null
+        }
+        
         const newCustomer = {
           id: uuidv4(),
           name: customerData.name,
@@ -262,13 +281,58 @@ const useDebtStore = create(
         return summary
       },
 
+      // Free tier management
+      isFreeTier: () => {
+        const state = get()
+        return state.userTier === 'free'
+      },
+
+      canAddCustomer: () => {
+        const state = get()
+        return state.userTier === 'pro' || state.customers.length < FREE_TIER_LIMIT
+      },
+
+      getCustomerLimit: () => {
+        const state = get()
+        return state.userTier === 'free' ? FREE_TIER_LIMIT : null
+      },
+
+      getRemainingCustomerSlots: () => {
+        const state = get()
+        if (state.userTier === 'pro') return null
+        return Math.max(0, FREE_TIER_LIMIT - state.customers.length)
+      },
+
+      upgradeToProTier: () => {
+        set({ 
+          userTier: 'pro',
+          showUpgradePrompt: false,
+          showProWelcome: true,
+          error: null 
+        })
+      },
+
+      // Upgrade prompt management
+      showUpgradeModal: () => set({ showUpgradePrompt: true }),
+      hideUpgradePrompt: () => set({ showUpgradePrompt: false }),
+
+      // Pro welcome modal management
+      showProWelcomeModal: () => set({ showProWelcome: true }),
+      hideProWelcomeModal: () => set({ showProWelcome: false }),
+
       // Utility actions
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
       setLoading: (loading) => set({ isLoading: loading }),
 
-      // Development helper
-      clearAllData: () => set({ customers: [], error: null }),
+      // Development helpers
+      resetToFreeTier: () => set({ 
+        userTier: 'free',
+        showUpgradePrompt: false,
+        showProWelcome: false,
+        error: null 
+      }),
+      clearAllData: () => set({ customers: [], error: null, userTier: 'free', showUpgradePrompt: false, showProWelcome: false }),
     }),
     {
       name: 'trackdeni-storage', // localStorage key

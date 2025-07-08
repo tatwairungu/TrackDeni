@@ -2,9 +2,25 @@ import { useState, useMemo } from 'react'
 import useDebtStore from '../store/useDebtStore'
 import CustomerCard from '../components/CustomerCard'
 import Header from '../components/Header'
+import UpgradePrompt from '../components/UpgradePrompt'
+import ProWelcomeModal from '../components/ProWelcomeModal'
 
 const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
-  const { customers, getTotalOwed, getTotalPaid, clearAllData } = useDebtStore()
+  const { 
+    customers, 
+    getTotalOwed, 
+    getTotalPaid, 
+    clearAllData, 
+    isFreeTier,
+    canAddCustomer,
+    getCustomerLimit,
+    getRemainingCustomerSlots,
+    showUpgradePrompt,
+    hideUpgradePrompt,
+    showUpgradeModal,
+    showProWelcome,
+    hideProWelcomeModal
+  } = useDebtStore()
   const [filter, setFilter] = useState('all') // all, overdue, due-soon, paid
 
   // Calculate totals
@@ -133,6 +149,14 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
     }
   }
 
+  const handleAddDebt = () => {
+    if (canAddCustomer()) {
+      onNavigateToAddDebt()
+    } else {
+      showUpgradeModal()
+    }
+  }
+
   const headerActions = [
     {
       label: 'Add Debt',
@@ -142,7 +166,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
         </svg>
       ),
       variant: 'primary',
-      onClick: () => onNavigateToAddDebt()
+      onClick: handleAddDebt
     }
   ]
 
@@ -159,7 +183,29 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">
         {/* Summary Stats */}
         <div className="card">
-          <h2 className="font-semibold text-lg mb-4">Overview</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-lg">Overview</h2>
+            <div className="flex items-center space-x-2">
+              {isFreeTier() ? (
+                <>
+                  <span className="text-sm text-gray-600">Free Tier</span>
+                  <button
+                    onClick={showUpgradeModal}
+                    className="text-sm text-primary hover:text-primary/80 underline"
+                  >
+                    Upgrade
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <div className="inline-flex items-center gap-1 bg-gradient-to-r from-primary to-success px-3 py-1 rounded-full">
+                    <span className="text-white text-sm font-semibold">✨ PRO</span>
+                  </div>
+                  <span className="text-sm text-gray-600">Member</span>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-danger/10 rounded-lg">
               <p className="text-2xl font-bold text-danger">
@@ -176,10 +222,57 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
             <div className="text-center p-4 bg-primary/10 rounded-lg lg:block">
               <p className="text-2xl font-bold text-primary">
                 {customers.length}
+                {isFreeTier() && <span className="text-sm text-gray-600">/{getCustomerLimit()}</span>}
+                {!isFreeTier() && (
+                  <span className="text-xs text-success ml-1">∞</span>
+                )}
               </p>
-              <p className="text-sm text-gray-600">Active Customers</p>
+              <p className="text-sm text-gray-600">
+                {isFreeTier() ? 'Customers Used' : 'Active Customers'}
+              </p>
+              {!isFreeTier() && (
+                <p className="text-xs text-success font-medium mt-1">Unlimited</p>
+              )}
             </div>
           </div>
+          
+          {/* Free tier warning */}
+          {isFreeTier() && getRemainingCustomerSlots() <= 1 && (
+            <div className="mt-4 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <span className="text-accent">⚠️</span>
+                <div>
+                  <p className="text-sm font-semibold text-accent">
+                    {getRemainingCustomerSlots() === 0 
+                      ? 'Free tier limit reached!' 
+                      : `Only ${getRemainingCustomerSlots()} customer slot remaining`}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {getRemainingCustomerSlots() === 0 
+                      ? 'Upgrade to Pro to add more customers' 
+                      : 'Upgrade to Pro for unlimited customers'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Pro tier celebration */}
+          {!isFreeTier() && customers.length >= 5 && (
+            <div className="mt-4 p-3 bg-gradient-to-r from-primary/10 to-success/10 border border-primary/20 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <span className="text-primary">🎉</span>
+                <div>
+                  <p className="text-sm font-semibold text-primary">
+                    Growing strong with {customers.length} customers!
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    No limits with TrackDeni Pro - keep adding more customers as you grow!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filter Tabs */}
@@ -281,6 +374,18 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
 
 
       </div>
+      
+      {/* Upgrade Prompt */}
+      <UpgradePrompt 
+        isOpen={showUpgradePrompt}
+        onClose={hideUpgradePrompt}
+      />
+      
+      {/* Pro Welcome Modal */}
+      <ProWelcomeModal 
+        isOpen={showProWelcome}
+        onClose={hideProWelcomeModal}
+      />
     </div>
   )
 }

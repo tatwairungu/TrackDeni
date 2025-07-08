@@ -89,6 +89,47 @@ export const translations = {
     delete: 'Delete',
     edit: 'Edit',
     loading: 'Loading...',
+    
+    // Upgrade prompt
+    upgrade: {
+      title: 'Upgrade to Pro',
+      subtitle: 'You\'ve reached the free tier limit of 5 customers',
+      price: 'KES 500',
+      priceUnit: '/ month',
+      regularPrice: 'Regular price: KES 1,000/month',
+      launchPrice: 'Special Launch Price',
+      benefits: {
+        unlimited: 'Unlimited Customers',
+        unlimitedDesc: 'Track as many customers as you need',
+        sms: 'SMS Bundles',
+        smsDesc: 'Send automatic payment reminders',
+        cloud: 'Cloud Sync',
+        cloudDesc: 'Access your data from any device',
+        reports: 'Advanced Reports',
+        reportsDesc: 'Detailed analytics and insights',
+        backup: 'Data Backup',
+        backupDesc: 'Never lose your customer data',
+        support: 'Priority Support',
+        supportDesc: 'Get help when you need it'
+      },
+      cta: {
+        upgrade: 'Upgrade Now',
+        later: 'Maybe Later',
+        back: 'Back'
+      },
+      guarantee: '30-day money-back guarantee • Cancel anytime',
+      payment: {
+        title: 'Choose Payment Method',
+        subtitle: 'Complete your upgrade to TrackDeni Pro',
+        mpesa: 'M-Pesa',
+        mpesaDesc: 'Pay with your M-Pesa account',
+        card: 'Card Payment',
+        cardDesc: 'Pay with Visa, Mastercard, or other cards',
+        bank: 'Bank Transfer',
+        bankDesc: 'Direct bank transfer',
+        secure: 'Secure Payment • 256-bit SSL encryption'
+      }
+    }
   },
   
   swahili: {
@@ -180,6 +221,47 @@ export const translations = {
     delete: 'Futa',
     edit: 'Hariri',
     loading: 'Inapakia...',
+    
+    // Upgrade prompt
+    upgrade: {
+      title: 'Panda daraja kwenda Pro',
+      subtitle: 'Umefika kikomo cha bure cha wateja 5',
+      price: 'KES 500',
+      priceUnit: '/ mwezi',
+      regularPrice: 'Bei ya kawaida: KES 1,000/mwezi',
+      launchPrice: 'Bei Maalum ya Uzinduzi',
+      benefits: {
+        unlimited: 'Wateja Bila Kikomo',
+        unlimitedDesc: 'Fuatilia wateja wangapi unahitaji',
+        sms: 'Vishuka vya SMS',
+        smsDesc: 'Tuma vikumbusho vya malipo kiotomatiki',
+        cloud: 'Usawazishaji wa Wingu',
+        cloudDesc: 'Pata data yako kutoka kifaa chochote',
+        reports: 'Ripoti za Juu',
+        reportsDesc: 'Uchanganuzi wa kina na maarifa',
+        backup: 'Nakala ya Data',
+        backDesc: 'Usipoteze data ya wateja wako kamwe',
+        support: 'Msaada wa Kwanza',
+        supportDesc: 'Pata msaada unapohitaji'
+      },
+      cta: {
+        upgrade: 'Panda Daraja Sasa',
+        later: 'Labda Baadaye',
+        back: 'Rudi'
+      },
+      guarantee: 'Dhamana ya kurudi fedha siku 30 • Ghairi wakati wowote',
+      payment: {
+        title: 'Chagua Njia ya Malipo',
+        subtitle: 'Kamilisha kupanda daraja kwenda TrackDeni Pro',
+        mpesa: 'M-Pesa',
+        mpesaDesc: 'Lipa kwa akaunti yako ya M-Pesa',
+        card: 'Malipo ya Kadi',
+        cardDesc: 'Lipa kwa Visa, Mastercard, au kadi zingine',
+        bank: 'Uhamisho wa Benki',
+        bankDesc: 'Uhamisho wa moja kwa moja wa benki',
+        secure: 'Malipo Salama • Usimbaji wa SSL 256-bit'
+      }
+    }
   }
 }
 

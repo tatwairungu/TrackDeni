@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getTodayDate, addDays } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
+import UpgradePrompt from './UpgradePrompt'
 
 // Helper function to safely parse monetary amounts (fixes floating point precision)
 const parseMonetaryAmount = (amount) => {
@@ -8,7 +9,17 @@ const parseMonetaryAmount = (amount) => {
 }
 
 const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutorial }) => {
-  const { addCustomer, addDebt, customers } = useDebtStore()
+  const { 
+    addCustomer, 
+    addDebt, 
+    customers, 
+    canAddCustomer,
+    showUpgradePrompt,
+    hideUpgradePrompt,
+    showUpgradeModal,
+    getRemainingCustomerSlots,
+    isFreeTier
+  } = useDebtStore()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState({})
   
@@ -90,6 +101,13 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
 
       // Create new customer if needed
       if (isNewCustomer) {
+        // Check free tier limit before creating new customer
+        if (!canAddCustomer()) {
+          showUpgradeModal()
+          setIsLoading(false)
+          return
+        }
+        
         // Check if customer already exists
         if (includePhone && formData.phone.trim()) {
           const existingByPhone = customers.find(c => 
@@ -118,6 +136,12 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           name: formData.name.trim(),
           phone: includePhone ? formData.phone.trim() : ''
         })
+        
+        // Check if customer creation failed due to limit
+        if (!customerIdToUse) {
+          setIsLoading(false)
+          return
+        }
       }
 
       // Add debt to customer
@@ -168,6 +192,44 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
       <h2 className="text-xl font-semibold text-text mb-4">
         {isNewCustomer ? 'Add New Customer & Debt' : `Add Debt for ${existingCustomer?.name || 'Customer'}`}
       </h2>
+
+      {/* Free tier warning for new customers */}
+      {isNewCustomer && isFreeTier() && getRemainingCustomerSlots() <= 1 && (
+        <div className="p-3 bg-accent/10 border border-accent/20 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <span className="text-accent">⚠️</span>
+            <div>
+              <p className="text-sm font-semibold text-accent">
+                {getRemainingCustomerSlots() === 0 
+                  ? 'Free tier limit reached!' 
+                  : `Only ${getRemainingCustomerSlots()} customer slot remaining`}
+              </p>
+              <p className="text-xs text-gray-600">
+                {getRemainingCustomerSlots() === 0 
+                  ? 'You cannot add more customers on the free tier' 
+                  : 'Upgrade to Pro for unlimited customers'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Pro tier celebration for new customers */}
+      {isNewCustomer && !isFreeTier() && (
+        <div className="p-3 bg-gradient-to-r from-primary/10 to-success/10 border border-primary/20 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <span className="text-primary">✨</span>
+            <div>
+              <p className="text-sm font-semibold text-primary">
+                Adding customers with TrackDeni Pro!
+              </p>
+              <p className="text-xs text-gray-600">
+                No limits - grow your business as much as you want.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Customer Information (only for new customers) */}
       {isNewCustomer && (
@@ -425,6 +487,12 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           {isLoading ? 'Saving...' : 'Save Debt'}
         </button>
       </div>
+      
+      {/* Upgrade Prompt */}
+      <UpgradePrompt 
+        isOpen={showUpgradePrompt}
+        onClose={hideUpgradePrompt}
+      />
     </form>
   )
 }
