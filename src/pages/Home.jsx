@@ -95,11 +95,11 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
     <div className="min-h-screen bg-bg">
       <Header title="TrackDeni" actions={headerActions} />
       
-      <div className="max-w-md lg:max-w-2xl mx-auto p-4 space-y-6">
+      <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">
         {/* Summary Stats */}
         <div className="card">
           <h2 className="font-semibold text-lg mb-4">Overview</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-danger/10 rounded-lg">
               <p className="text-2xl font-bold text-danger">
                 KES {totalOwed.toLocaleString()}
@@ -112,12 +112,11 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
               </p>
               <p className="text-sm text-gray-600">Total Paid</p>
             </div>
-          </div>
-          
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Active Customers</span>
-              <span className="font-medium">{customers.length}</span>
+            <div className="text-center p-4 bg-primary/10 rounded-lg lg:block">
+              <p className="text-2xl font-bold text-primary">
+                {customers.length}
+              </p>
+              <p className="text-sm text-gray-600">Active Customers</p>
             </div>
           </div>
         </div>
@@ -206,13 +205,15 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer }) => {
               )}
             </div>
           ) : (
-            filteredCustomers.map(customer => (
-              <CustomerCard
-                key={customer.id}
-                customer={customer}
-                onClick={onNavigateToCustomer}
-              />
-            ))
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filteredCustomers.map(customer => (
+                <CustomerCard
+                  key={customer.id}
+                  customer={customer}
+                  onClick={onNavigateToCustomer}
+                />
+              ))}
+            </div>
           )}
         </div>
 

@@ -22,7 +22,7 @@ const AddDebt = ({ customerId, onBack, onSuccess }) => {
         onBack={onBack}
       />
       
-      <div className="max-w-md lg:max-w-2xl mx-auto p-4">
+      <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4">
         <DebtForm
           customerId={customerId}
           onSuccess={handleSuccess}

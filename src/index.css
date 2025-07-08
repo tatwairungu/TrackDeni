@@ -32,3 +32,30 @@
     @apply bg-danger text-white px-2 py-1 rounded-full text-xs font-medium;
   }
 }
+
+/* Hide number input spinner arrows */
+@layer utilities {
+  /* Hide spinner arrows in Webkit browsers (Chrome, Safari, Edge) */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+    display: none;
+  }
+
+  /* Hide spinner arrows in Firefox */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Additional spinner prevention for all browsers */
+  input[type="number"] {
+    appearance: textfield;
+    -webkit-appearance: textfield;
+  }
+
+  /* Prevent focus outline on spinner interactions */
+  input[type="number"]:focus {
+    outline: none;
+  }
+}

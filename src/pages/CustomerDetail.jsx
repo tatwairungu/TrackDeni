@@ -82,7 +82,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
         actions={headerActions}
       />
       
-      <div className="max-w-md lg:max-w-2xl mx-auto p-4 space-y-6">
+      <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">
         {/* Customer Info */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">
@@ -138,7 +138,8 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
         {activeDebts.length > 0 && (
           <div className="space-y-4">
             <h3 className="font-semibold text-text">Outstanding Debts</h3>
-            {activeDebts.map(debt => {
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {activeDebts.map(debt => {
               const totalPaid = debt.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0
               const remaining = debt.amount - totalPaid
               const status = getDebtStatus(debt.dueDate, debt.paid)
@@ -206,7 +207,8 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
                   </button>
                 </div>
               )
-            })}
+              })}
+            </div>
           </div>
         )}
 
@@ -214,7 +216,8 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
         {paidDebts.length > 0 && (
           <div className="space-y-4">
             <h3 className="font-semibold text-gray-600">Paid Debts</h3>
-            {paidDebts.slice(-3).map(debt => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paidDebts.slice(-3).map(debt => (
               <div key={debt.id} className="card bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div>
@@ -226,7 +229,8 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
                   <span className="badge-success">Paid</span>
                 </div>
               </div>
-            ))}
+              ))}
+            </div>
             {paidDebts.length > 3 && (
               <p className="text-sm text-gray-500 text-center">
                 +{paidDebts.length - 3} more paid debt{paidDebts.length - 3 > 1 ? 's' : ''}

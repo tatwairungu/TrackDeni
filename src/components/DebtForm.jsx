@@ -204,6 +204,20 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
             step="0.01"
             value={formData.amount}
             onChange={handleInputChange('amount')}
+            onWheel={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onKeyDown={(e) => {
+              // Prevent arrow keys from changing the value
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault()
+                e.stopPropagation()
+              }
+            }}
+            style={{
+              MozAppearance: 'textfield' // Firefox
+            }}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
               errors.amount ? 'border-danger' : 'border-gray-300'
             }`}

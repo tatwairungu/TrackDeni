@@ -227,6 +227,20 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose }) => {
                 step="0.01"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
+                onWheel={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+                onKeyDown={(e) => {
+                  // Prevent arrow keys from changing the value
+                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }
+                }}
+                style={{
+                  MozAppearance: 'textfield' // Firefox
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder={`Owed: ${remainingAmount.toLocaleString()} ${hasOtherDebts ? '(overpayment clears other debts)' : '(overpayment creates credit)'}`}
                 required
