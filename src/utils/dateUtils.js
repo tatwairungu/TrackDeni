@@ -17,21 +17,25 @@ export const getRelativeTime = (date) => {
 }
 
 export const isOverdue = (dueDate) => {
+  if (!dueDate) return false
   return dayjs(dueDate).isBefore(dayjs(), 'day')
 }
 
 export const isDueSoon = (dueDate, days = 3) => {
+  if (!dueDate) return false
   const due = dayjs(dueDate)
   const now = dayjs()
   return due.isAfter(now) && due.diff(now, 'day') <= days
 }
 
 export const getDaysUntilDue = (dueDate) => {
+  if (!dueDate) return null
   return dayjs(dueDate).diff(dayjs(), 'day')
 }
 
 export const getDebtStatus = (dueDate, isPaid = false) => {
   if (isPaid) return 'paid'
+  if (!dueDate) return 'no-due-date' // Handle null/undefined due dates
   if (isOverdue(dueDate)) return 'overdue'
   if (isDueSoon(dueDate)) return 'due-soon'
   return 'active'
@@ -45,6 +49,8 @@ export const getStatusColor = (status) => {
       return 'danger'
     case 'due-soon':
       return 'accent'
+    case 'no-due-date':
+      return 'primary'
     default:
       return 'primary'
   }
@@ -52,6 +58,7 @@ export const getStatusColor = (status) => {
 
 export const getStatusText = (dueDate, isPaid = false) => {
   if (isPaid) return 'Paid'
+  if (!dueDate) return 'No due date' // Handle null/undefined due dates
   
   const today = dayjs()
   const due = dayjs(dueDate)

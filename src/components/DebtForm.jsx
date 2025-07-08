@@ -22,6 +22,10 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
     ...initialData
   })
 
+  // Toggle states for optional features
+  const [includePhone, setIncludePhone] = useState(true)
+  const [includeDueDate, setIncludeDueDate] = useState(true)
+
   // If we have a customerId, we're adding debt to existing customer
   const isNewCustomer = !customerId
   const existingCustomer = customerId ? customers.find(c => c.id === customerId) : null
@@ -44,10 +48,12 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
       if (!formData.name.trim()) {
         newErrors.name = 'Customer name is required'
       }
-      if (!formData.phone.trim()) {
-        newErrors.phone = 'Phone number is required'
-      } else if (!/^(\+254|0)[0-9]{9}$/.test(formData.phone.replace(/\s/g, ''))) {
-        newErrors.phone = 'Please enter a valid Kenyan phone number'
+      if (includePhone) {
+        if (!formData.phone.trim()) {
+          newErrors.phone = 'Phone number is required'
+        } else if (!/^(\+254|0)[0-9]{9}$/.test(formData.phone.replace(/\s/g, ''))) {
+          newErrors.phone = 'Please enter a valid Kenyan phone number'
+        }
       }
     }
 
@@ -61,10 +67,12 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
     if (!formData.dateBorrowed) {
       newErrors.dateBorrowed = 'Date borrowed is required'
     }
-    if (!formData.dueDate) {
-      newErrors.dueDate = 'Due date is required'
-    } else if (new Date(formData.dueDate) <= new Date(formData.dateBorrowed)) {
-      newErrors.dueDate = 'Due date must be after date borrowed'
+    if (includeDueDate) {
+      if (!formData.dueDate) {
+        newErrors.dueDate = 'Due date is required'
+      } else if (new Date(formData.dueDate) <= new Date(formData.dateBorrowed)) {
+        newErrors.dueDate = 'Due date must be after date borrowed'
+      }
     }
 
     setErrors(newErrors)
@@ -83,19 +91,32 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
       // Create new customer if needed
       if (isNewCustomer) {
         // Check if customer already exists
-        const existingByPhone = customers.find(c => 
-          c.phone.replace(/\s/g, '') === formData.phone.replace(/\s/g, '')
+        if (includePhone && formData.phone.trim()) {
+          const existingByPhone = customers.find(c => 
+            c.phone && c.phone.replace(/\s/g, '') === formData.phone.replace(/\s/g, '')
+          )
+          
+          if (existingByPhone) {
+            setErrors({ phone: 'Customer with this phone number already exists' })
+            setIsLoading(false)
+            return
+          }
+        }
+
+        // Check for existing customer by name (more flexible for informal businesses)
+        const existingByName = customers.find(c => 
+          c.name.toLowerCase().trim() === formData.name.toLowerCase().trim()
         )
         
-        if (existingByPhone) {
-          setErrors({ phone: 'Customer with this phone number already exists' })
+        if (existingByName) {
+          setErrors({ name: 'Customer with this name already exists' })
           setIsLoading(false)
           return
         }
 
         customerIdToUse = addCustomer({
           name: formData.name.trim(),
-          phone: formData.phone.trim()
+          phone: includePhone ? formData.phone.trim() : ''
         })
       }
 
@@ -104,7 +125,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
         amount: parseMonetaryAmount(formData.amount),
         reason: formData.reason.trim(),
         dateBorrowed: formData.dateBorrowed,
-        dueDate: formData.dueDate
+        dueDate: includeDueDate ? formData.dueDate : null
       })
 
       // Reset form
@@ -171,19 +192,60 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              value={formData.phone}
-              onChange={handleInputChange('phone')}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                errors.phone ? 'border-danger' : 'border-gray-300'
-              }`}
-              placeholder="0712345678 or +254712345678"
-            />
+            <div className="flex items-center justify-between mb-3">
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number {includePhone && <span className="text-red-500">*</span>}
+              </label>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm transition-colors ${includePhone ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {includePhone ? 'Required' : 'Optional'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIncludePhone(!includePhone)}
+                  className={`relative inline-flex h-6 w-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                    includePhone ? 'bg-primary shadow-md' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-200 ease-in-out ${
+                      includePhone ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                    style={{ marginTop: '2px' }}
+                  />
+                </button>
+              </div>
+            </div>
+            
+            {includePhone && (
+              <input
+                type="tel"
+                id="phone"
+                value={formData.phone}
+                onChange={handleInputChange('phone')}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
+                  errors.phone ? 'border-danger' : 'border-gray-300'
+                }`}
+                placeholder="0712345678 or +254712345678"
+              />
+            )}
+            
+            {!includePhone && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-2">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                  <div>
+                    <p className="text-orange-800 text-sm font-medium">SMS features disabled</p>
+                    <p className="text-orange-700 text-xs mt-1">
+                      You won't be able to send payment reminders or notifications to this customer.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {errors.phone && <p className="text-danger text-sm mt-1">{errors.phone}</p>}
           </div>
         </div>
@@ -243,17 +305,17 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           {errors.reason && <p className="text-danger text-sm mt-1">{errors.reason}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="dateBorrowed" className="block text-sm font-medium text-gray-700 mb-1">
-              Date Borrowed *
+            <label htmlFor="dateBorrowed" className="block text-sm font-medium text-gray-700 mb-2">
+              Date Borrowed <span className="text-red-500">*</span>
             </label>
             <input
               type="date"
               id="dateBorrowed"
               value={formData.dateBorrowed}
               onChange={handleInputChange('dateBorrowed')}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
                 errors.dateBorrowed ? 'border-danger' : 'border-gray-300'
               }`}
             />
@@ -261,18 +323,59 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           </div>
 
           <div>
-            <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Due Date *
-            </label>
-            <input
-              type="date"
-              id="dueDate"
-              value={formData.dueDate}
-              onChange={handleInputChange('dueDate')}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                errors.dueDate ? 'border-danger' : 'border-gray-300'
-              }`}
-            />
+            <div className="flex items-center justify-between mb-3">
+              <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
+                Due Date {includeDueDate && <span className="text-red-500">*</span>}
+              </label>
+              <div className="flex items-center gap-3">
+                <span className={`text-sm transition-colors ${includeDueDate ? 'text-gray-600' : 'text-gray-400'}`}>
+                  {includeDueDate ? 'Set date' : 'Open-ended'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIncludeDueDate(!includeDueDate)}
+                  className={`relative inline-flex h-6 w-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
+                    includeDueDate ? 'bg-primary shadow-md' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-200 ease-in-out ${
+                      includeDueDate ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                    style={{ marginTop: '2px' }}
+                  />
+                </button>
+              </div>
+            </div>
+            
+            {includeDueDate && (
+              <input
+                type="date"
+                id="dueDate"
+                value={formData.dueDate}
+                onChange={handleInputChange('dueDate')}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
+                  errors.dueDate ? 'border-danger' : 'border-gray-300'
+                }`}
+              />
+            )}
+            
+            {!includeDueDate && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-blue-800 text-sm font-medium">Open-ended debt</p>
+                    <p className="text-blue-700 text-xs mt-1">
+                      Perfect for informal arrangements like "pay when you can" or "next time I see you".
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {errors.dueDate && <p className="text-danger text-sm mt-1">{errors.dueDate}</p>}
           </div>
         </div>
@@ -282,6 +385,25 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
       {errors.submit && (
         <div className="bg-danger/10 border border-danger/20 rounded-lg p-3">
           <p className="text-danger text-sm">{errors.submit}</p>
+        </div>
+      )}
+
+      {/* Summary warning when both features are disabled */}
+      {isNewCustomer && !includePhone && !includeDueDate && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-1 bg-purple-100 rounded-full">
+              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-purple-800 text-sm font-semibold">🌟 Fully Informal Mode</p>
+              <p className="text-purple-700 text-xs mt-1 leading-relaxed">
+                Perfect for local community businesses! This customer will be tracked by name only with flexible payment terms.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
