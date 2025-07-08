@@ -297,6 +297,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
         <button
           type="submit"
           disabled={isLoading}
+          data-tutorial="save-debt-button"
           className="flex-1 btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Saving...' : 'Save Debt'}

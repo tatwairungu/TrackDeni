@@ -4,6 +4,7 @@ import { t } from '../utils/localization'
 const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
   const [showHint, setShowHint] = useState(true)
   const [targetPos, setTargetPos] = useState({ top: 0, left: 0, width: 0, height: 0 })
+  const [modalDismissed, setModalDismissed] = useState(false)
 
   const tutorialSteps = {
     'highlight-add-button': {
@@ -54,6 +55,11 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
     return null
   }
 
+  // Reset modal dismissed state when step changes
+  useEffect(() => {
+    setModalDismissed(false)
+  }, [currentStep])
+
   // Update target position when step changes
   useEffect(() => {
     if (!currentStepData) return
@@ -84,28 +90,33 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
 
   const hintPosition = getHintPosition()
 
+  // Steps that allow dismissing the modal to interact with the form
+  const interactiveSteps = ['fill-customer-form', 'mark-as-paid']
+
   return (
     <>
       {/* Overlay with cutout to highlight target element */}
-      <div className="fixed inset-0 z-40 pointer-events-none">
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/50"></div>
-        
-        {/* Cutout highlight */}
-        <div 
-          className="absolute border-4 border-primary rounded-lg bg-transparent"
-          style={{
-            top: targetPos.top - 4,
-            left: targetPos.left - 4,
-            width: targetPos.width + 8,
-            height: targetPos.height + 8,
-            boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
-          }}
-        />
-      </div>
+      {!modalDismissed && (
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/50"></div>
+          
+          {/* Cutout highlight */}
+          <div 
+            className="absolute border-4 border-primary rounded-lg bg-transparent"
+            style={{
+              top: targetPos.top - 4,
+              left: targetPos.left - 4,
+              width: targetPos.width + 8,
+              height: targetPos.height + 8,
+              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+            }}
+          />
+        </div>
+      )}
 
       {/* Tutorial hint */}
-      {showHint && (
+      {showHint && !modalDismissed && (
         <>
           {/* Hand emoji pointing to target */}
           <div 
@@ -141,6 +152,15 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
                 {t('skip')}
               </button>
               
+              {interactiveSteps.includes(currentStep) && (
+                <button
+                  onClick={() => setModalDismissed(true)}
+                  className="text-sm bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark"
+                >
+                  Got it!
+                </button>
+              )}
+              
               {currentStep === 'clear-data' && (
                 <button
                   onClick={() => {
@@ -158,6 +178,8 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
           </div>
         </>
       )}
+
+
     </>
   )
 }
