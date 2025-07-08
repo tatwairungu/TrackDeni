@@ -5,6 +5,7 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
   const [showHint, setShowHint] = useState(true)
   const [targetPos, setTargetPos] = useState({ top: 0, left: 0, width: 0, height: 0 })
   const [modalDismissed, setModalDismissed] = useState(false)
+  const [buttonClicked, setButtonClicked] = useState(false)
 
   const tutorialSteps = {
     'highlight-add-button': {
@@ -26,30 +27,33 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
     'record-payment': {
       titleKey: 'tutorial.interactive.step3.title',
       descriptionKey: 'tutorial.interactive.step3.description',
-      target: 'record-payment-button',
+      target: 'pay-button',
       position: 'bottom',
       icon: '💰',
       action: 'click'
     },
-    'mark-as-paid': {
+    'payment-options': {
       titleKey: 'tutorial.interactive.step4.title',
       descriptionKey: 'tutorial.interactive.step4.description',
       target: 'payment-modal',
       position: 'top',
-      icon: '✅',
+      icon: '⚡',
       action: 'submit'
     },
-    'clear-data': {
+    'tutorial-complete': {
       titleKey: 'tutorial.interactive.step5.title',
       descriptionKey: 'tutorial.interactive.step5.description',
-      target: 'menu-button',
-      position: 'bottom-left',
-      icon: '🧹',
+      target: 'record-payment-button',
+      position: 'bottom',
+      icon: '🎉',
       action: 'click'
     }
   }
 
   const currentStepData = tutorialSteps[currentStep]
+
+  // Debug logging
+  console.log('InteractiveTutorial: currentStep =', currentStep, 'currentStepData =', currentStepData)
 
   if (!currentStep || !currentStepData) {
     return null
@@ -58,6 +62,7 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
   // Reset modal dismissed state when step changes
   useEffect(() => {
     setModalDismissed(false)
+    setButtonClicked(false)
   }, [currentStep])
 
   // Update target position when step changes
@@ -65,7 +70,9 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
     if (!currentStepData) return
     
     const target = document.querySelector(`[data-tutorial="${currentStepData.target}"]`)
+    console.log('InteractiveTutorial: Looking for target:', currentStepData.target, 'Found:', target)
     if (!target) {
+      console.log('InteractiveTutorial: Target not found, setting empty position')
       setTargetPos({ top: 0, left: 0, width: 0, height: 0 })
       return
     }
@@ -77,6 +84,18 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
       width: rect.width,
       height: rect.height
     })
+
+    // Add click listener to target button to hide speech bubble
+    const handleTargetClick = () => {
+      setButtonClicked(true)
+    }
+
+    target.addEventListener('click', handleTargetClick)
+    
+    // Cleanup
+    return () => {
+      target.removeEventListener('click', handleTargetClick)
+    }
   }, [currentStep])
 
   // Center the modal on screen for better responsiveness
@@ -91,7 +110,7 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
   const hintPosition = getHintPosition()
 
   // Steps that allow dismissing the modal to interact with the form
-  const interactiveSteps = ['fill-customer-form', 'mark-as-paid']
+  const interactiveSteps = ['fill-customer-form', 'record-payment', 'payment-options']
 
   return (
     <>
@@ -161,13 +180,20 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
                 </button>
               )}
               
-              {currentStep === 'clear-data' && (
+              {currentStep === 'tutorial-complete' && (
                 <button
                   onClick={() => {
+                    // Clear tutorial state
                     localStorage.setItem('hasSeenTutorial', 'true')
                     localStorage.removeItem('shouldShowTutorial')
                     localStorage.removeItem('tutorialStep')
+                    
+                    // Clear test data - use the correct localStorage key
+                    localStorage.removeItem('trackdeni-storage')
+                    
+                    // Complete tutorial and refresh
                     onComplete()
+                    window.location.reload()
                   }}
                   className="text-sm bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary-dark"
                 >
@@ -179,6 +205,44 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
         </>
       )}
 
+      {/* Highlight target when modal is dismissed */}
+      {showHint && modalDismissed && !buttonClicked && interactiveSteps.includes(currentStep) && currentStep !== 'payment-options' && (
+        <>
+          {/* Pulsing border around target button */}
+          <div 
+            className="fixed z-40 border-4 border-primary rounded-lg animate-pulse pointer-events-none"
+            style={{
+              top: targetPos.top - 4,
+              left: targetPos.left - 4,
+              width: targetPos.width + 8,
+              height: targetPos.height + 8,
+              boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.3)'
+            }}
+          />
+
+          {/* Text bubble above the button */}
+          <div 
+            className="fixed z-50 bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium pointer-events-none shadow-lg"
+            style={{
+              top: targetPos.top - 50,
+              left: targetPos.left + targetPos.width / 2,
+              transform: 'translateX(-50%)'
+            }}
+          >
+            {currentStep === 'record-payment' ? 'Click here!' : 'Click this!'}
+            
+            {/* Arrow pointing down to button */}
+            <div 
+              className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0"
+              style={{
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '6px solid rgb(34, 197, 94)'
+              }}
+            />
+          </div>
+        </>
+      )}
 
     </>
   )

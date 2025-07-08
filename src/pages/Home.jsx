@@ -117,11 +117,19 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
     )
     
     if (confirmed) {
+      // Clear data from store
       clearAllData()
+      
+      // Also clear localStorage directly to ensure complete cleanup
+      localStorage.removeItem('trackdeni-storage')
+      
       alert('All data has been cleared successfully.')
       
       // Handle tutorial progression
-      tutorial?.onClearDataClicked()
+      tutorial?.onTutorialCompleteClicked()
+      
+      // Refresh the page to ensure clean state
+      window.location.reload()
     }
   }
 
@@ -264,6 +272,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
                   key={customer.id}
                   customer={customer}
                   onClick={onNavigateToCustomer}
+                  tutorial={tutorial}
                 />
               ))}
             </div>

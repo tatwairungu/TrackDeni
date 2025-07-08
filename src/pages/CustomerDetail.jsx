@@ -52,8 +52,6 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
     setSelectedDebt(debt)
     setPaymentMode('single')
     setShowPaymentModal(true)
-    // Handle tutorial progression
-    tutorial?.onRecordPaymentClicked()
   }
 
   const handlePayAll = () => {

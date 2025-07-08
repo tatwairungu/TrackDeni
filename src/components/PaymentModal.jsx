@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import useDebtStore from '../store/useDebtStore'
 import { formatDate } from '../utils/dateUtils'
 
@@ -13,6 +13,19 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
   const [paymentType, setPaymentType] = useState('partial') // partial or full
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Handle tutorial progression when modal opens
+  useEffect(() => {
+    if (isOpen && tutorial?.onRecordPaymentClicked) {
+      console.log('PaymentModal: Advancing tutorial step')
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => {
+        tutorial.onRecordPaymentClicked()
+        console.log('PaymentModal: Called onRecordPaymentClicked')
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, tutorial])
 
   if (!isOpen || !customer) return null
 
@@ -308,6 +321,7 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
             <button
               type="submit"
               disabled={isLoading}
+              data-tutorial="record-payment-button"
               className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 paymentType === 'full'
                   ? 'bg-success text-white hover:bg-success/90'

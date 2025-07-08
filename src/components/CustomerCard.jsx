@@ -3,7 +3,7 @@ import { getDebtStatus, getStatusColor, getStatusText, formatDateShort } from '.
 import useDebtStore from '../store/useDebtStore'
 import PaymentModal from './PaymentModal'
 
-const CustomerCard = ({ customer, onClick }) => {
+const CustomerCard = ({ customer, onClick, tutorial }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const { getCustomerDebtSummary } = useDebtStore()
@@ -121,6 +121,7 @@ const CustomerCard = ({ customer, onClick }) => {
         {urgentDebt && (
           <button
             onClick={handleRecordPayment}
+            data-tutorial="pay-button"
             className="bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 transition-colors"
           >
             Pay
@@ -157,6 +158,7 @@ const CustomerCard = ({ customer, onClick }) => {
           setShowPaymentModal(false)
           setSelectedDebt(null)
         }}
+        tutorial={tutorial}
       />
     </div>
   )

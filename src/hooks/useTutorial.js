@@ -59,19 +59,21 @@ export const useTutorial = () => {
   }
 
   const onRecordPaymentClicked = () => {
+    console.log('Tutorial: onRecordPaymentClicked called, currentStep:', currentStep)
     if (currentStep === 'record-payment') {
-      nextStep('mark-as-paid')
+      console.log('Tutorial: Advancing from record-payment to payment-options')
+      nextStep('payment-options')
     }
   }
 
   const onPaymentSubmitted = () => {
-    if (currentStep === 'mark-as-paid') {
-      nextStep('clear-data')
+    if (currentStep === 'payment-options') {
+      nextStep('tutorial-complete')
     }
   }
 
-  const onClearDataClicked = () => {
-    if (currentStep === 'clear-data') {
+  const onTutorialCompleteClicked = () => {
+    if (currentStep === 'tutorial-complete') {
       completeTutorial()
     }
   }
@@ -88,6 +90,6 @@ export const useTutorial = () => {
     onCustomerFormSubmitted,
     onRecordPaymentClicked,
     onPaymentSubmitted,
-    onClearDataClicked
+    onTutorialCompleteClicked
   }
 } 

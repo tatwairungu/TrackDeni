@@ -61,18 +61,18 @@ export const translations = {
         },
         step3: {
           title: 'Record a Payment',
-          description: 'Now click "Record Payment" to mark that the customer has paid some money.'
+          description: 'Now click the "Pay" button on the customer card to record a payment.'
         },
         step4: {
-          title: 'Mark as Paid',
-          description: 'Enter a payment amount and click the payment button to record it.'
+          title: 'Payment Options',
+          description: 'You can choose "Partial Payment" to pay part of the debt, or "Pay in Full" to clear everything. Then click "Record Payment".'
         },
         step5: {
-          title: 'Clear the Data',
-          description: 'Click the menu (⋮) button and select "Clear All Data" to reset for fresh start.'
+          title: 'Congratulations! 🎉',
+          description: 'You\'ve completed the tutorial! You now know how to track debts and payments. Click below to clear this test data and start using the app to grow your business.'
         }
       },
-      complete: 'Complete Tutorial'
+      complete: 'Clear Test Data & Start Fresh'
     },
     
     // Navigation
@@ -152,18 +152,18 @@ export const translations = {
         },
         step3: {
           title: 'Rekodi Malipo',
-          description: 'Sasa bonyeza "Rekodi Malipo" kuashiria kwamba mteja amelipa pesa fulani.'
+          description: 'Sasa bonyeza kitufe cha "Lipa" kwenye kadi ya mteja kurekodi malipo.'
         },
         step4: {
-          title: 'Weka Kuwa Amelipa',
-          description: 'Ingiza kiasi cha malipo na bonyeza kitufe cha malipo kurekodi.'
+          title: 'Chaguo za Malipo',
+          description: 'Unaweza kuchagua "Malipo ya Sehemu" kulipa sehemu ya deni, au "Lipa Kamili" kufuta yote. Kisha bonyeza "Rekodi Malipo".'
         },
         step5: {
-          title: 'Safisha Data',
-          description: 'Bonyeza kitufe cha menyu (⋮) na chagua "Futa Data Zote" kuanza upya.'
+          title: 'Hongera! 🎉',
+          description: 'Umekamilisha mafunzo! Sasa unajua jinsi ya kufuatilia madeni na malipo. Bonyeza hapa chini kufuta data hii ya majaribio na kuanza kutumia app kukua biashara yako.'
         }
       },
-      complete: 'Maliza Mafunzo'
+      complete: 'Futa Data ya Majaribio & Anza Upya'
     },
     
     // Navigation
