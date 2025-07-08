@@ -1,7 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
-const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [] }) => {
+const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], onSettings, onExportData, onClearAllData }) => {
   const [showMenu, setShowMenu] = useState(false)
+  const menuRef = useRef(null)
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false)
+      }
+    }
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMenu])
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -60,15 +78,33 @@ const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [] })
 
         {/* Dropdown menu */}
         {showMenu && (
-          <div className="absolute right-4 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+          <div ref={menuRef} className="absolute right-4 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+            <button 
+              onClick={() => {
+                onSettings && onSettings()
+                setShowMenu(false)
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
               Settings
             </button>
-            <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            <button 
+              onClick={() => {
+                onExportData && onExportData()
+                setShowMenu(false)
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
               Export Data
             </button>
             <hr className="my-1" />
-            <button className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-gray-100">
+            <button 
+              onClick={() => {
+                onClearAllData && onClearAllData()
+                setShowMenu(false)
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-gray-100"
+            >
               Clear All Data
             </button>
           </div>

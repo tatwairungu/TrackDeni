@@ -5,7 +5,7 @@ import useDebtStore from '../store/useDebtStore'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
 
 const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
-  const { customers, getCustomerDebtSummary } = useDebtStore()
+  const { customers, getCustomerDebtSummary, clearAllData } = useDebtStore()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const [paymentMode, setPaymentMode] = useState('single') // single or multiple
@@ -60,6 +60,49 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
     setShowPaymentModal(true)
   }
 
+  // Menu action handlers
+  const handleSettings = () => {
+    alert('Settings functionality coming soon!')
+  }
+
+  const handleExportData = () => {
+    try {
+      const data = {
+        customers,
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+      }
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `trackdeni-data-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      alert('Failed to export data. Please try again.')
+    }
+  }
+
+  const handleClearAllData = () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to clear all data? This action cannot be undone.\n\n' +
+      'This will delete:\n' +
+      '• All customers\n' +
+      '• All debts\n' +
+      '• All payment history\n\n' +
+      'Consider exporting your data first.'
+    )
+    
+    if (confirmed) {
+      clearAllData()
+      alert('All data has been cleared successfully.')
+    }
+  }
+
   const headerActions = [
     {
       label: 'Add Debt',
@@ -80,6 +123,9 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt }) => {
         showBack={true} 
         onBack={onBack}
         actions={headerActions}
+        onSettings={handleSettings}
+        onExportData={handleExportData}
+        onClearAllData={handleClearAllData}
       />
       
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">
