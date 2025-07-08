@@ -54,37 +54,24 @@ const InteractiveTutorial = ({ currentStep, onComplete, onStepComplete }) => {
     return null
   }
 
-  // Update target position when component mounts or window resizes
+  // Update target position when step changes
   useEffect(() => {
-    const updateTargetPosition = () => {
-      if (!currentStepData) return
-      
-      const target = document.querySelector(`[data-tutorial="${currentStepData.target}"]`)
-      if (!target) {
-        setTargetPos({ top: 0, left: 0, width: 0, height: 0 })
-        return
-      }
-      
-      const rect = target.getBoundingClientRect()
-      setTargetPos({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height
-      })
-    }
-
-    // Update position immediately
-    updateTargetPosition()
-
-    // Add resize listener
-    window.addEventListener('resize', updateTargetPosition)
+    if (!currentStepData) return
     
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', updateTargetPosition)
+    const target = document.querySelector(`[data-tutorial="${currentStepData.target}"]`)
+    if (!target) {
+      setTargetPos({ top: 0, left: 0, width: 0, height: 0 })
+      return
     }
-  }, [currentStep, currentStepData])
+    
+    const rect = target.getBoundingClientRect()
+    setTargetPos({
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height
+    })
+  }, [currentStep])
 
   // Center the modal on screen for better responsiveness
   const getHintPosition = () => {
