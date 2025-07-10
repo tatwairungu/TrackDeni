@@ -56,6 +56,14 @@ const SignupModal = ({ isOpen, onClose, onLoginClick, onSignupSuccess }) => {
     try {
       const userData = { name: name.trim() }
       const result = await signUpWithEmail(email, password, userData)
+      
+      // Show migration success message if data was migrated
+      if (result.migrationResult && result.migrationResult.migratedCustomers > 0) {
+        const message = `✅ Account created! Your ${result.migrationResult.migratedCustomers} customers and ${result.migrationResult.migratedDebts} debts have been safely transferred to the cloud.`
+        console.log(message)
+        // You could show a toast notification here
+      }
+      
       onSignupSuccess(result.user)
       onClose()
     } catch (error) {
@@ -99,6 +107,16 @@ const SignupModal = ({ isOpen, onClose, onLoginClick, onSignupSuccess }) => {
 
     try {
       const result = await signInWithGoogle()
+      
+      // Show appropriate message based on whether user is new or existing
+      if (result.isNewUser && result.migrationResult && result.migrationResult.migratedCustomers > 0) {
+        const message = `✅ Account created with Google! Your ${result.migrationResult.migratedCustomers} customers and ${result.migrationResult.migratedDebts} debts have been safely transferred to the cloud.`
+        console.log(message)
+      } else if (!result.isNewUser && result.syncResult && result.syncResult.customers > 0) {
+        const message = `✅ Welcome back! Your ${result.syncResult.customers} customers have been loaded from the cloud.`
+        console.log(message)
+      }
+      
       onSignupSuccess(result.user)
       onClose()
     } catch (error) {

@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './config'
+import { migrateLocalDataToFirestore, syncFirestoreToLocal } from './dataSync'
 
 // Authentication state management
 export const authStateListener = (callback) => {
@@ -46,7 +47,16 @@ export const signUpWithEmail = async (email, password, userData) => {
       totalPaid: 0
     })
     
-    return { success: true, user }
+    // Migrate local data to Firestore for new users
+    const migrationResult = await migrateLocalDataToFirestore(user.uid)
+    console.log('📊 Migration result:', migrationResult)
+    
+    return { 
+      success: true, 
+      user,
+      isNewUser: true,
+      migrationResult 
+    }
   } catch (error) {
     console.error('Email signup error:', error)
     return { success: false, error: error.message }
@@ -62,7 +72,15 @@ export const signInWithEmail = async (email, password) => {
       lastActive: serverTimestamp()
     })
     
-    return { success: true, user: userCredential.user }
+    // Sync Firestore data to local storage
+    const syncResult = await syncFirestoreToLocal(userCredential.user.uid)
+    console.log('📊 Sync result:', syncResult)
+    
+    return { 
+      success: true, 
+      user: userCredential.user,
+      syncResult 
+    }
   } catch (error) {
     console.error('Email signin error:', error)
     return { success: false, error: error.message }
@@ -82,7 +100,9 @@ export const signInWithGoogle = async () => {
     // Check if this is a new user
     const userDoc = await getDoc(doc(db, 'users', user.uid))
     
-    if (!userDoc.exists()) {
+    const isNewUser = !userDoc.exists()
+    
+    if (isNewUser) {
       // Create new user document
       await createUserDocument(user.uid, {
         name: user.displayName,
@@ -96,14 +116,34 @@ export const signInWithGoogle = async () => {
         totalOwed: 0,
         totalPaid: 0
       })
+      
+      // Migrate local data for new users
+      const migrationResult = await migrateLocalDataToFirestore(user.uid)
+      console.log('📊 Google signup migration result:', migrationResult)
+      
+      return { 
+        success: true, 
+        user, 
+        isNewUser: true,
+        migrationResult 
+      }
     } else {
       // Update existing user's last active
       await updateUserDocument(user.uid, {
         lastActive: serverTimestamp()
       })
+      
+      // Sync Firestore data for existing users
+      const syncResult = await syncFirestoreToLocal(user.uid)
+      console.log('📊 Google signin sync result:', syncResult)
+      
+      return { 
+        success: true, 
+        user, 
+        isNewUser: false,
+        syncResult 
+      }
     }
-    
-    return { success: true, user, isNewUser: !userDoc.exists() }
   } catch (error) {
     console.error('Google signin error:', error)
     return { success: false, error: error.message }
@@ -191,10 +231,13 @@ export const resendPhoneCode = async (phoneNumber, recaptchaVerifier) => {
 // User document management
 export const createUserDocument = async (userId, userData) => {
   try {
+    console.log('📝 Creating user document for:', userId, 'with data:', userData)
     await setDoc(doc(db, 'users', userId), userData)
-    console.log('✅ User document created:', userId)
+    console.log('✅ User document created successfully:', userId)
   } catch (error) {
     console.error('❌ Error creating user document:', error)
+    console.error('❌ User ID:', userId)
+    console.error('❌ User data:', userData)
     throw error
   }
 }
