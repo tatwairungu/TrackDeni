@@ -28,8 +28,8 @@ export const db = getFirestore(app)
 export const analytics = typeof window !== 'undefined' && !import.meta.env.DEV ? getAnalytics(app) : null
 export const perf = typeof window !== 'undefined' && !import.meta.env.DEV ? getPerformance(app) : null
 
-// Development mode: Connect to emulators
-if (import.meta.env.DEV) {
+// Development mode: Connect to emulators (disabled for testing)
+if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATORS === 'true') {
   // Connect to Auth emulator (try-catch handles if already connected)
   try {
     connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })

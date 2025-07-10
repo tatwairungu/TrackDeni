@@ -20,17 +20,22 @@ export const authStateListener = (callback) => {
 // Email Authentication
 export const signUpWithEmail = async (email, password, userData) => {
   try {
+    // Validate required data
+    if (!userData || !userData.name || userData.name.trim().length === 0) {
+      throw new Error('Name is required for signup')
+    }
+    
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const user = userCredential.user
     
     // Update user profile
     await updateProfile(user, {
-      displayName: userData.name
+      displayName: userData.name.trim()
     })
     
     // Create user document in Firestore
     await createUserDocument(user.uid, {
-      name: userData.name,
+      name: userData.name.trim(),
       email: user.email,
       phoneNumber: userData.phoneNumber || null,
       isPro: false,

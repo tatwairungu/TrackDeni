@@ -54,7 +54,8 @@ const SignupModal = ({ isOpen, onClose, onLoginClick, onSignupSuccess }) => {
     }
 
     try {
-      const result = await signUpWithEmail(email, password, name)
+      const userData = { name: name.trim() }
+      const result = await signUpWithEmail(email, password, userData)
       onSignupSuccess(result.user)
       onClose()
     } catch (error) {
@@ -73,7 +74,7 @@ const SignupModal = ({ isOpen, onClose, onLoginClick, onSignupSuccess }) => {
     try {
       // Format phone number for Kenya (+254)
       const formattedPhone = formatPhoneNumber(phone)
-      const result = await signUpWithPhone(formattedPhone, name)
+      const result = await signUpWithPhone(formattedPhone)
       
       // Phone auth will require verification, so we handle it differently
       if (result.needsVerification) {
