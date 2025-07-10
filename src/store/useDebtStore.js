@@ -22,7 +22,7 @@ const useDebtStore = create(
       
       // Signup encouragement state
       showSignupEncouragement: false,
-      signupEncouragementDismissed: false,
+      dismissedCustomerCounts: [], // Track which customer counts have been dismissed
       lastSignupPromptCustomerCount: 0,
 
       // Actions
@@ -52,12 +52,14 @@ const useDebtStore = create(
           // Check if we should show signup encouragement
           let shouldShowSignupEncouragement = false
           
-          if (!state.signupEncouragementDismissed && 
-              newCustomerCount !== state.lastSignupPromptCustomerCount) {
-            // Show encouragement on 1st, 2nd, and 3rd customer
-            if (newCustomerCount === 1 || newCustomerCount === 2 || newCustomerCount === 3) {
-              shouldShowSignupEncouragement = true
-            }
+          // Only show encouragement if:
+          // 1. This customer count hasn't been dismissed before
+          // 2. We haven't shown a prompt for this customer count already
+          // 3. Customer count is 1, 2, or 3
+          if (!state.dismissedCustomerCounts.includes(newCustomerCount) && 
+              newCustomerCount !== state.lastSignupPromptCustomerCount &&
+              (newCustomerCount === 1 || newCustomerCount === 2 || newCustomerCount === 3)) {
+            shouldShowSignupEncouragement = true
           }
           
           return {
@@ -344,13 +346,23 @@ const useDebtStore = create(
 
       // Signup encouragement management
       showSignupEncouragementModal: () => set({ showSignupEncouragement: true }),
-      hideSignupEncouragement: () => set({ 
-        showSignupEncouragement: false,
-        signupEncouragementDismissed: true 
-      }),
+      hideSignupEncouragement: () => {
+        const state = get()
+        set({ 
+          showSignupEncouragement: false,
+          dismissedCustomerCounts: [...state.dismissedCustomerCounts, state.customers.length]
+        })
+      },
       resetSignupEncouragement: () => set({ 
         showSignupEncouragement: false,
-        signupEncouragementDismissed: false,
+        dismissedCustomerCounts: [],
+        lastSignupPromptCustomerCount: 0
+      }),
+      
+      // Disable encouragement when user signs up
+      disableSignupEncouragement: () => set({ 
+        showSignupEncouragement: false,
+        dismissedCustomerCounts: [1, 2, 3], // Mark all as dismissed
         lastSignupPromptCustomerCount: 0
       }),
 
@@ -383,6 +395,6 @@ const parseMonetaryAmount = (amount) => {
 // Helper function to calculate total payments for a debt
 const getTotalPaid = (payments) => {
   return payments.reduce((total, payment) => total + payment.amount, 0)
-}
-
+  }
+  
 export default useDebtStore 

@@ -84,8 +84,23 @@ function App() {
           console.log('📊 Current state:', {
             customers: state.customers.length,
             userTier: state.userTier,
-            canAddMore: state.canAddCustomer()
+            canAddMore: state.canAddCustomer(),
+            dismissedCustomerCounts: state.dismissedCustomerCounts,
+            showSignupEncouragement: state.showSignupEncouragement
           })
+        },
+        
+        // Reset signup encouragement for testing
+        resetSignupEncouragement: () => {
+          store.resetSignupEncouragement()
+          console.log('🔄 Signup encouragement reset - you can test modals again')
+        },
+        
+        // Test signup encouragement flow
+        testSignupFlow: () => {
+          store.resetSignupEncouragement()
+          store.clearAllData()
+          console.log('🧪 Test setup complete - add customers to see encouragement modals')
         }
       }
       
@@ -96,6 +111,8 @@ function App() {
       console.log('  trackDeniDev.upgradeToPro() - Direct upgrade')
       console.log('  trackDeniDev.resetToFree() - Reset for testing')
       console.log('  trackDeniDev.showState() - Show current state')
+      console.log('  trackDeniDev.resetSignupEncouragement() - Reset signup modals for testing')
+      console.log('  trackDeniDev.testSignupFlow() - Fresh start for testing signup flow')
     }
   }, [])
 

@@ -20,17 +20,27 @@ const AuthGuard = ({ children, requireAuth = false }) => {
   })
   
   // Get store state for signup encouragement
-  const { customers, showSignupEncouragement, hideSignupEncouragement } = useDebtStore()
+  const { customers, showSignupEncouragement, hideSignupEncouragement, disableSignupEncouragement } = useDebtStore()
 
-  // Show signup encouragement modal when store indicates
+  // Show signup encouragement modal when store indicates (only for non-authenticated users)
   useEffect(() => {
     if (showSignupEncouragement && !user) {
       setAuthModalState(prev => ({
         ...prev,
         showSignupEncouragement: true
       }))
+    } else if (showSignupEncouragement && user) {
+      // User is authenticated, hide the encouragement immediately
+      hideSignupEncouragement()
     }
-  }, [showSignupEncouragement, user])
+  }, [showSignupEncouragement, user, hideSignupEncouragement])
+
+  // Disable signup encouragement when user becomes authenticated
+  useEffect(() => {
+    if (user) {
+      disableSignupEncouragement()
+    }
+  }, [user, disableSignupEncouragement])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
