@@ -4,6 +4,7 @@ import AddDebt from './pages/AddDebt'
 import CustomerDetail from './pages/CustomerDetail'
 import OnboardingFlow from './components/OnboardingFlow'
 import InteractiveTutorial from './components/InteractiveTutorial'
+import AuthGuard from './components/AuthGuard'
 import { useTutorial } from './hooks/useTutorial'
 import useDebtStore from './store/useDebtStore'
 
@@ -190,15 +191,17 @@ function App() {
 
   // Show main app with interactive tutorial if needed
   return (
-    <div className="relative">
-      {renderCurrentPage()}
-      {tutorial.isActive && (
-        <InteractiveTutorial 
-          currentStep={tutorial.currentStep}
-          onComplete={tutorial.completeTutorial}
-        />
-      )}
-    </div>
+    <AuthGuard>
+      <div className="relative">
+        {renderCurrentPage()}
+        {tutorial.isActive && (
+          <InteractiveTutorial 
+            currentStep={tutorial.currentStep}
+            onComplete={tutorial.completeTutorial}
+          />
+        )}
+      </div>
+    </AuthGuard>
   )
 }
 
