@@ -10,10 +10,6 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
     
-    function isProUser() {
-      return resource.data.isPro == true;
-    }
-    
     function validateUserDataUpdate(data) {
       return data.keys().hasAll(['name', 'isPro']) &&
              data.name is string &&
@@ -54,16 +50,6 @@ service cloud.firestore {
              (data.reason == null || data.reason is string) &&
              (data.dueDate == null || data.dueDate is timestamp) &&
              (data.payments == null || data.payments is list);
-    }
-    
-    function validatePaymentRequestData(data) {
-      return data.keys().hasAll(['userId', 'phoneNumber', 'amount', 'status', 'createdAt']) &&
-             data.userId is string &&
-             data.phoneNumber is string &&
-             data.amount is number &&
-             data.amount > 0 &&
-             data.status in ['pending', 'completed', 'failed'] &&
-             data.createdAt is timestamp;
     }
     
     // Rate limiting helper (basic implementation)
