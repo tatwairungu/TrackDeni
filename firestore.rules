@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isProUser() {
+      return resource.data.isPro == true;
+    }
+    
+    function validateUserDataUpdate(data) {
+      return data.keys().hasAll(['name', 'isPro']) &&
+             data.name is string &&
+             data.name.size() <= 100 &&
+             data.name.size() >= 1 &&
+             data.isPro is bool;
+    }
+    
+    function validateUserDataCreate(data) {
+      return data.keys().hasAll(['name', 'isPro', 'joinedAt']) &&
+             data.name is string &&
+             data.name.size() <= 100 &&
+             data.name.size() >= 1 &&
+             data.isPro is bool &&
+             data.joinedAt is timestamp;
+    }
+    
+    function validateCustomerData(data) {
+      return data.keys().hasAll(['name', 'createdAt']) &&
+             data.name is string &&
+             data.name.size() <= 100 &&
+             data.name.size() >= 1 &&
+             data.createdAt is timestamp &&
+             (data.phoneNumber == null || data.phoneNumber is string) &&
+             (data.totalOwed == null || data.totalOwed is number) &&
+             (data.totalPaid == null || data.totalPaid is number) &&
+             (data.activeDebts == null || data.activeDebts is number);
+    }
+    
+    function validateDebtData(data) {
+      return data.keys().hasAll(['customerId', 'amount', 'status', 'createdAt']) &&
+             data.customerId is string &&
+             data.customerName is string &&
+             data.amount is number &&
+             data.amount >= 0 &&
+             data.status in ['unpaid', 'partial', 'paid'] &&
+             data.createdAt is timestamp &&
+             (data.reason == null || data.reason is string) &&
+             (data.dueDate == null || data.dueDate is timestamp) &&
+             (data.payments == null || data.payments is list);
+    }
+    
+    function validatePaymentRequestData(data) {
+      return data.keys().hasAll(['userId', 'phoneNumber', 'amount', 'status', 'createdAt']) &&
+             data.userId is string &&
+             data.phoneNumber is string &&
+             data.amount is number &&
+             data.amount > 0 &&
+             data.status in ['pending', 'completed', 'failed'] &&
+             data.createdAt is timestamp;
+    }
+    
+    // Rate limiting helper (basic implementation)
+    function isWithinRateLimit() {
+      // In a real implementation, you'd use a more sophisticated rate limiting
+      // For now, we'll allow all authenticated requests
+      return isAuthenticated();
+    }
+    
+    // User documents
+    match /users/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) &&
+                       validateUserDataCreate(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(userId) && 
+                       validateUserDataUpdate(request.resource.data) &&
+                       isWithinRateLimit();
+      allow delete: if false; // Prevent user deletion for data integrity
+      
+      // Customer subcollection
+      match /customers/{customerId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow create: if isAuthenticated() && isOwner(userId) &&
+                         validateCustomerData(request.resource.data) &&
+                         isWithinRateLimit();
+        allow update: if isAuthenticated() && isOwner(userId) &&
+                         validateCustomerData(request.resource.data) &&
+                         isWithinRateLimit();
+        allow delete: if isAuthenticated() && isOwner(userId) &&
+                         isWithinRateLimit();
+      }
+      
+      // Debt subcollection
+      match /debts/{debtId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow create: if isAuthenticated() && isOwner(userId) &&
+                         validateDebtData(request.resource.data) &&
+                         isWithinRateLimit();
+        allow update: if isAuthenticated() && isOwner(userId) &&
+                         validateDebtData(request.resource.data) &&
+                         isWithinRateLimit();
+        allow delete: if isAuthenticated() && isOwner(userId) &&
+                         isWithinRateLimit();
+      }
+    }
+    
+    // Payment requests (only Cloud Functions can write, users can read their own)
+    match /paymentRequests/{requestId} {
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      allow create: if false; // Only Cloud Functions can create
+      allow update: if false; // Only Cloud Functions can update
+      allow delete: if false; // Only Cloud Functions can delete
+    }
+    
+    // Analytics data (only readable by the user who owns it)
+    match /analytics/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if false; // Only Cloud Functions can write analytics
+    }
+    
+    // System configuration (read-only for all authenticated users)
+    match /config/{document} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admins via Cloud Functions
+    }
+  }
+} 
