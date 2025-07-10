@@ -19,6 +19,11 @@ const useDebtStore = create(
       userTier: 'free', // 'free' or 'pro'
       showUpgradePrompt: false,
       showProWelcome: false,
+      
+      // Signup encouragement state
+      showSignupEncouragement: false,
+      signupEncouragementDismissed: false,
+      lastSignupPromptCustomerCount: 0,
 
       // Actions
       addCustomer: (customerData) => {
@@ -41,10 +46,27 @@ const useDebtStore = create(
           createdAt: new Date().toISOString(),
         }
         
-        set((state) => ({
-          customers: [...state.customers, newCustomer],
-          error: null
-        }))
+        set((state) => {
+          const newCustomerCount = state.customers.length + 1
+          
+          // Check if we should show signup encouragement
+          let shouldShowSignupEncouragement = false
+          
+          if (!state.signupEncouragementDismissed && 
+              newCustomerCount !== state.lastSignupPromptCustomerCount) {
+            // Show encouragement on 1st, 2nd, and 3rd customer
+            if (newCustomerCount === 1 || newCustomerCount === 2 || newCustomerCount === 3) {
+              shouldShowSignupEncouragement = true
+            }
+          }
+          
+          return {
+            customers: [...state.customers, newCustomer],
+            showSignupEncouragement: shouldShowSignupEncouragement,
+            lastSignupPromptCustomerCount: shouldShowSignupEncouragement ? newCustomerCount : state.lastSignupPromptCustomerCount,
+            error: null
+          }
+        })
         
         return newCustomer.id
       },
@@ -319,6 +341,18 @@ const useDebtStore = create(
       // Pro welcome modal management
       showProWelcomeModal: () => set({ showProWelcome: true }),
       hideProWelcomeModal: () => set({ showProWelcome: false }),
+
+      // Signup encouragement management
+      showSignupEncouragementModal: () => set({ showSignupEncouragement: true }),
+      hideSignupEncouragement: () => set({ 
+        showSignupEncouragement: false,
+        signupEncouragementDismissed: true 
+      }),
+      resetSignupEncouragement: () => set({ 
+        showSignupEncouragement: false,
+        signupEncouragementDismissed: false,
+        lastSignupPromptCustomerCount: 0
+      }),
 
       // Utility actions
       setError: (error) => set({ error }),

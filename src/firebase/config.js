@@ -30,22 +30,20 @@ export const perf = typeof window !== 'undefined' && !import.meta.env.DEV ? getP
 
 // Development mode: Connect to emulators
 if (import.meta.env.DEV) {
-  // Connect to Auth emulator
-  if (!auth._delegate._config.emulator) {
-    try {
-      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
-    } catch (error) {
-      console.log('Auth emulator connection failed:', error.message)
-    }
+  // Connect to Auth emulator (try-catch handles if already connected)
+  try {
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true })
+  } catch (error) {
+    // Emulator connection failed or already connected - this is fine
+    console.log('Auth emulator connection skipped:', error.message)
   }
   
-  // Connect to Firestore emulator
-  if (!db._delegate._databaseId.projectId.includes('localhost')) {
-    try {
-      connectFirestoreEmulator(db, 'localhost', 8080)
-    } catch (error) {
-      console.log('Firestore emulator connection failed:', error.message)
-    }
+  // Connect to Firestore emulator (try-catch handles if already connected)
+  try {
+    connectFirestoreEmulator(db, 'localhost', 8080)
+  } catch (error) {
+    // Emulator connection failed or already connected - this is fine
+    console.log('Firestore emulator connection skipped:', error.message)
   }
 }
 

@@ -5,7 +5,7 @@ import Header from '../components/Header'
 import UpgradePrompt from '../components/UpgradePrompt'
 import ProWelcomeModal from '../components/ProWelcomeModal'
 
-const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
+const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
   const { 
     customers, 
     getTotalOwed, 
@@ -172,12 +172,15 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial }) => {
 
   return (
     <div className="min-h-screen bg-bg">
-      <Header 
-        title="TrackDeni" 
+            <Header
+        title="TrackDeni"
         actions={headerActions}
         onSettings={handleSettings}
         onExportData={handleExportData}
         onClearAllData={handleClearAllData}
+        user={user}
+        onSignIn={signIn}
+        onSignOut={signOut}
       />
       
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">

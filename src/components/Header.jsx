@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], onSettings, onExportData, onClearAllData }) => {
+const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], onSettings, onExportData, onClearAllData, user, onSignIn, onSignOut }) => {
   const [showMenu, setShowMenu] = useState(false)
   const menuRef = useRef(null)
 
@@ -81,6 +81,41 @@ const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], o
         {/* Dropdown menu */}
         {showMenu && (
           <div ref={menuRef} className="absolute right-4 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+            {/* Authentication section */}
+            {user ? (
+              <>
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="text-xs text-gray-500">Signed in as</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user.displayName || user.email || user.phoneNumber}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => {
+                    onSignOut && onSignOut()
+                    setShowMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Sign Out
+                </button>
+                <hr className="my-1" />
+              </>
+            ) : (
+              <>
+                <button 
+                  onClick={() => {
+                    onSignIn && onSignIn()
+                    setShowMenu(false)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-primary hover:bg-gray-100 font-medium"
+                >
+                  Sign In / Sign Up
+                </button>
+                <hr className="my-1" />
+              </>
+            )}
+            
             <button 
               onClick={() => {
                 onSettings && onSettings()

@@ -5,16 +5,32 @@ import { getUserProfile } from '../firebase/auth'
 import LoginModal from './LoginModal'
 import SignupModal from './SignupModal'
 import PhoneVerificationModal from './PhoneVerificationModal'
+import SignupEncouragementModal from './SignupEncouragementModal'
+import useDebtStore from '../store/useDebtStore'
 
-const AuthGuard = ({ children }) => {
+const AuthGuard = ({ children, requireAuth = false }) => {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authModalState, setAuthModalState] = useState({
     showLogin: false,
     showSignup: false,
     showPhoneVerification: false,
+    showSignupEncouragement: false,
     phoneNumber: ''
   })
+  
+  // Get store state for signup encouragement
+  const { customers, showSignupEncouragement, hideSignupEncouragement } = useDebtStore()
+
+  // Show signup encouragement modal when store indicates
+  useEffect(() => {
+    if (showSignupEncouragement && !user) {
+      setAuthModalState(prev => ({
+        ...prev,
+        showSignupEncouragement: true
+      }))
+    }
+  }, [showSignupEncouragement, user])
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -87,8 +103,36 @@ const AuthGuard = ({ children }) => {
       showLogin: false,
       showSignup: false,
       showPhoneVerification: false,
+      showSignupEncouragement: false,
       phoneNumber: ''
     })
+  }
+
+  const handleSignupEncouragementClose = () => {
+    hideSignupEncouragement()
+    setAuthModalState(prev => ({
+      ...prev,
+      showSignupEncouragement: false
+    }))
+  }
+
+  const handleSignupEncouragementSignup = () => {
+    setAuthModalState({
+      showLogin: false,
+      showSignup: true,
+      showPhoneVerification: false,
+      showSignupEncouragement: false,
+      phoneNumber: ''
+    })
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut()
+      closeAllModals()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   // Show loading state
@@ -111,8 +155,8 @@ const AuthGuard = ({ children }) => {
     )
   }
 
-  // Show authentication screen if user is not logged in
-  if (!user) {
+  // Show authentication screen if user is not logged in AND auth is required
+  if (!user && requireAuth) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <div className="max-w-md w-full mx-4">
@@ -234,8 +278,45 @@ const AuthGuard = ({ children }) => {
     )
   }
 
-  // User is authenticated, render the protected content
-  return children
+  // User is authenticated OR auth not required, render the protected content with modals
+  return (
+    <>
+      {typeof children === 'function' ? children({ 
+        user, 
+        signIn: showLoginModal, 
+        signOut: handleSignOut 
+      }) : children}
+      
+      {/* Auth Modals - Available even when not requiring auth */}
+      <LoginModal
+        isOpen={authModalState.showLogin}
+        onClose={closeAllModals}
+        onSignupClick={showSignupModal}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      <SignupModal
+        isOpen={authModalState.showSignup}
+        onClose={closeAllModals}
+        onLoginClick={showLoginModal}
+        onSignupSuccess={handleSignupSuccess}
+      />
+
+      <PhoneVerificationModal
+        isOpen={authModalState.showPhoneVerification}
+        onClose={closeAllModals}
+        phoneNumber={authModalState.phoneNumber}
+        onVerificationSuccess={handlePhoneVerificationSuccess}
+      />
+
+      <SignupEncouragementModal
+        isOpen={authModalState.showSignupEncouragement}
+        onClose={handleSignupEncouragementClose}
+        onSignupClick={handleSignupEncouragementSignup}
+        customerCount={customers.length}
+      />
+    </>
+  )
 }
 
 export default AuthGuard 

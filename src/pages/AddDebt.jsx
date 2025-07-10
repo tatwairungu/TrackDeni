@@ -2,7 +2,7 @@ import Header from '../components/Header'
 import DebtForm from '../components/DebtForm'
 import useDebtStore from '../store/useDebtStore'
 
-const AddDebt = ({ customerId, onBack, onSuccess, tutorial }) => {
+const AddDebt = ({ customerId, onBack, onSuccess, tutorial, user, signIn, signOut }) => {
   const { customers, clearAllData } = useDebtStore()
   const handleSuccess = (newCustomerId) => {
     // Show success feedback
@@ -68,6 +68,9 @@ const AddDebt = ({ customerId, onBack, onSuccess, tutorial }) => {
         onSettings={handleSettings}
         onExportData={handleExportData}
         onClearAllData={handleClearAllData}
+        user={user}
+        onSignIn={signIn}
+        onSignOut={signOut}
       />
       
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4">

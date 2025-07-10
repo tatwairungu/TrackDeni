@@ -138,7 +138,7 @@ function App() {
     }
   }
 
-  const renderCurrentPage = () => {
+  const renderCurrentPage = (user, signIn, signOut) => {
     switch (currentPage) {
       case 'add-debt':
         return (
@@ -147,6 +147,9 @@ function App() {
             onBack={navigateToHome}
             onSuccess={handleDebtSuccess}
             tutorial={tutorial}
+            user={user}
+            signIn={signIn}
+            signOut={signOut}
           />
         )
       case 'customer-detail':
@@ -156,6 +159,9 @@ function App() {
             onBack={navigateToHome}
             onNavigateToAddDebt={navigateToAddDebt}
             tutorial={tutorial}
+            user={user}
+            signIn={signIn}
+            signOut={signOut}
           />
         )
       case 'home':
@@ -165,6 +171,9 @@ function App() {
             onNavigateToAddDebt={navigateToAddDebt}
             onNavigateToCustomer={navigateToCustomer}
             tutorial={tutorial}
+            user={user}
+            signIn={signIn}
+            signOut={signOut}
           />
         )
     }
@@ -191,16 +200,18 @@ function App() {
 
   // Show main app with interactive tutorial if needed
   return (
-    <AuthGuard>
-      <div className="relative">
-        {renderCurrentPage()}
-        {tutorial.isActive && (
-          <InteractiveTutorial 
-            currentStep={tutorial.currentStep}
-            onComplete={tutorial.completeTutorial}
-          />
-        )}
-      </div>
+    <AuthGuard requireAuth={false}>
+      {({ user, signIn, signOut }) => (
+        <div className="relative">
+          {renderCurrentPage(user, signIn, signOut)}
+          {tutorial.isActive && (
+            <InteractiveTutorial 
+              currentStep={tutorial.currentStep}
+              onComplete={tutorial.completeTutorial}
+            />
+          )}
+        </div>
+      )}
     </AuthGuard>
   )
 }

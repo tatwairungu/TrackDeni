@@ -5,7 +5,7 @@ import ConfirmationDialog from '../components/ConfirmationDialog'
 import useDebtStore from '../store/useDebtStore'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
 
-const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) => {
+const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, user, signIn, signOut }) => {
   const { customers, getCustomerDebtSummary, clearAllData, deleteDebt } = useDebtStore()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
@@ -18,7 +18,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
   if (!customer) {
     return (
       <div className="min-h-screen bg-bg">
-        <Header title="Customer Not Found" showBack={true} onBack={onBack} />
+        <Header title="Customer Not Found" showBack={true} onBack={onBack} user={user} onSignIn={signIn} onSignOut={signOut} />
         <div className="max-w-md lg:max-w-2xl mx-auto p-4">
           <div className="card text-center">
             <p className="text-gray-600">Customer not found.</p>
@@ -147,6 +147,9 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial }) =
         onSettings={handleSettings}
         onExportData={handleExportData}
         onClearAllData={handleClearAllData}
+        user={user}
+        onSignIn={signIn}
+        onSignOut={signOut}
       />
       
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">

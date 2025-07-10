@@ -5,7 +5,9 @@ import {
   RecaptchaVerifier,
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth'
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './config'
@@ -58,6 +60,47 @@ export const signInWithEmail = async (email, password) => {
     return { success: true, user: userCredential.user }
   } catch (error) {
     console.error('Email signin error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+// Google Authentication
+export const signInWithGoogle = async () => {
+  try {
+    const provider = new GoogleAuthProvider()
+    provider.addScope('profile')
+    provider.addScope('email')
+    
+    const userCredential = await signInWithPopup(auth, provider)
+    const user = userCredential.user
+    
+    // Check if this is a new user
+    const userDoc = await getDoc(doc(db, 'users', user.uid))
+    
+    if (!userDoc.exists()) {
+      // Create new user document
+      await createUserDocument(user.uid, {
+        name: user.displayName,
+        email: user.email,
+        phoneNumber: user.phoneNumber || null,
+        photoURL: user.photoURL || null,
+        isPro: false,
+        joinedAt: serverTimestamp(),
+        lastActive: serverTimestamp(),
+        totalCustomers: 0,
+        totalOwed: 0,
+        totalPaid: 0
+      })
+    } else {
+      // Update existing user's last active
+      await updateUserDocument(user.uid, {
+        lastActive: serverTimestamp()
+      })
+    }
+    
+    return { success: true, user, isNewUser: !userDoc.exists() }
+  } catch (error) {
+    console.error('Google signin error:', error)
     return { success: false, error: error.message }
   }
 }
@@ -127,6 +170,19 @@ export const verifyPhoneCode = async (confirmationResult, code, userData = null)
   }
 }
 
+// Convenience functions for components
+export const signInWithPhone = async (phoneNumber, recaptchaVerifier) => {
+  return await sendPhoneVerification(phoneNumber, recaptchaVerifier)
+}
+
+export const signUpWithPhone = async (phoneNumber, recaptchaVerifier) => {
+  return await sendPhoneVerification(phoneNumber, recaptchaVerifier)
+}
+
+export const resendPhoneCode = async (phoneNumber, recaptchaVerifier) => {
+  return await sendPhoneVerification(phoneNumber, recaptchaVerifier)
+}
+
 // User document management
 export const createUserDocument = async (userId, userData) => {
   try {
@@ -176,6 +232,21 @@ export const signOutUser = async () => {
 // Get current user
 export const getCurrentUser = () => {
   return auth.currentUser
+}
+
+// Get user profile
+export const getUserProfile = async (userId) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId))
+    if (userDoc.exists()) {
+      return { success: true, data: userDoc.data() }
+    } else {
+      return { success: false, error: 'User profile not found' }
+    }
+  } catch (error) {
+    console.error('Error getting user profile:', error)
+    return { success: false, error: error.message }
+  }
 }
 
 // Check if user is authenticated
