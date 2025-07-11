@@ -89,11 +89,30 @@ const useDebtStore = create(
               createdAt: serverTimestamp()
             })
             
-            // Update user document's totalCustomers count
+            // Update user document's totalCustomers count and rate limiting
             const userRef = doc(db, 'users', userId)
             const newState = get()
+            
+            // Get current rate limit data to increment properly
+            const { getDoc } = await import('firebase/firestore')
+            const userDoc = await getDoc(userRef)
+            const userData = userDoc.data()
+            const rateLimits = userData.rateLimits || {}
+            const customerCreateData = rateLimits.customer_create || {}
+            
+            // Calculate new count (increment or reset if >1 minute passed)
+            const now = new Date()
+            const lastReset = customerCreateData.lastReset?.toDate ? customerCreateData.lastReset.toDate() : new Date(0)
+            const minutesSinceReset = (now - lastReset) / 60000
+            
+            const newCount = minutesSinceReset >= 1.0 ? 1 : (customerCreateData.count || 0) + 1
+            
             await updateDoc(userRef, {
-              totalCustomers: newState.customers.length
+              totalCustomers: newState.customers.length,
+              'rateLimits.customer_create': {
+                lastReset: minutesSinceReset >= 1.0 ? serverTimestamp() : customerCreateData.lastReset,
+                count: newCount
+              }
             })
             
             console.log('✅ Customer synced to Firestore successfully')
@@ -150,6 +169,29 @@ const useDebtStore = create(
                 status: 'unpaid'
               })
 
+              // Update rate limiting for debt creation
+              const userRef = doc(db, 'users', userId)
+              
+              // Get current rate limit data to increment properly
+              const { getDoc } = await import('firebase/firestore')
+              const userDoc = await getDoc(userRef)
+              const userData = userDoc.data()
+              const rateLimits = userData.rateLimits || {}
+              const debtCreateData = rateLimits.debt_create || {}
+              
+              // Calculate new count (increment or reset if >1 minute passed)
+              const now = new Date()
+              const lastReset = debtCreateData.lastReset?.toDate ? debtCreateData.lastReset.toDate() : new Date(0)
+              const minutesSinceReset = (now - lastReset) / 60000
+              
+              const newCount = minutesSinceReset >= 1.0 ? 1 : (debtCreateData.count || 0) + 1
+              
+              await updateDoc(userRef, {
+                'rateLimits.debt_create': {
+                  lastReset: minutesSinceReset >= 1.0 ? serverTimestamp() : debtCreateData.lastReset,
+                  count: newCount
+                }
+              })
               
               console.log('✅ Debt synced to Firestore successfully')
             }
@@ -413,9 +455,28 @@ const useDebtStore = create(
             
             // Update user document in Firestore
             const userRef = doc(db, 'users', userId)
+            
+            // Get current rate limit data to increment properly
+            const { getDoc } = await import('firebase/firestore')
+            const userDoc = await getDoc(userRef)
+            const userData = userDoc.data()
+            const rateLimits = userData.rateLimits || {}
+            const userUpdateData = rateLimits.user_update || {}
+            
+            // Calculate new count (increment or reset if >1 minute passed)
+            const now = new Date()
+            const lastReset = userUpdateData.lastReset?.toDate ? userUpdateData.lastReset.toDate() : new Date(0)
+            const minutesSinceReset = (now - lastReset) / 60000
+            
+            const newCount = minutesSinceReset >= 1.0 ? 1 : (userUpdateData.count || 0) + 1
+            
             await updateDoc(userRef, {
               isPro: true,
-              upgradedAt: serverTimestamp()
+              upgradedAt: serverTimestamp(),
+              'rateLimits.user_update': {
+                lastReset: minutesSinceReset >= 1.0 ? serverTimestamp() : userUpdateData.lastReset,
+                count: newCount
+              }
             })
             
             console.log('✅ Pro upgrade synced to Firestore successfully')

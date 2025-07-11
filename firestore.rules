@@ -58,40 +58,62 @@ service cloud.firestore {
       return isProUser(userId) || underFreeTierLimit(userId);
     }
     
-    // Rate limiting helper (basic implementation)
-    function isWithinRateLimit() {
-      // In a real implementation, you'd use a more sophisticated rate limiting
-      // For now, we'll allow all authenticated requests
-      return isAuthenticated();
+    // STEP 4: Rate limiting implementation (PRODUCTION READY)
+    function isWithinRateLimit(userId, operation) {
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      let now = request.time;
+      
+      // Get rate limit data from user document
+      let rateLimitData = userDoc.data.get('rateLimits', {});
+      let operationData = rateLimitData.get(operation, {});
+      
+      // Rate limits per operation type (requests per minute)
+      let customerLimit = 10;  // Max 10 customers per minute
+      let debtLimit = 20;      // Max 20 debts per minute  
+      let userLimit = 5;       // Max 5 profile updates per minute
+      
+      let currentLimit = operation == 'customer_create' ? customerLimit :
+                        operation == 'debt_create' ? debtLimit :
+                        operation == 'user_update' ? userLimit : 1;
+      
+      // Check if we have recent operation data and validate structure
+      return !operationData.keys().hasAll(['lastReset', 'count']) ||
+             (now.toMillis() - operationData.lastReset.toMillis()) / 60000 >= 1.0 ||
+             operationData.count < currentLimit;
     }
     
-    // User documents - STEP 1: Enable validation for user creation
+    // User documents - STEP 4: Add rate limiting to user operations
     match /users/{userId} {
       allow read: if isAuthenticated() && isOwner(userId);
       allow create: if isAuthenticated() && isOwner(userId) && 
                        validateUserDataCreate(request.resource.data);
       allow update: if isAuthenticated() && isOwner(userId) && 
-                       validateUserDataUpdate(request.resource.data);
+                       validateUserDataUpdate(request.resource.data) &&
+                       isWithinRateLimit(userId, 'user_update');
       allow delete: if false; // Prevent user deletion
       
-      // Customer subcollection - STEP 3: Add Pro tier enforcement (HARDENED)
+      // Customer subcollection - STEP 4: Add rate limiting to Pro tier enforcement
       match /customers/{customerId} {
         allow read: if isAuthenticated() && isOwner(userId);
         allow create: if isAuthenticated() && isOwner(userId) && 
                          validateCustomerData(request.resource.data) &&
-                         canCreateCustomer(userId);
+                         canCreateCustomer(userId) &&
+                         isWithinRateLimit(userId, 'customer_create');
         allow update: if isAuthenticated() && isOwner(userId) && 
-                         validateCustomerData(request.resource.data);
+                         validateCustomerData(request.resource.data) &&
+                         isWithinRateLimit(userId, 'customer_create');
         allow delete: if isAuthenticated() && isOwner(userId);
       }
       
-      // Debt subcollection - STEP 2: Enable basic validation
+      // Debt subcollection - STEP 4: Add rate limiting to debt operations
       match /debts/{debtId} {
         allow read: if isAuthenticated() && isOwner(userId);
         allow create: if isAuthenticated() && isOwner(userId) && 
-                         validateDebtData(request.resource.data);
+                         validateDebtData(request.resource.data) &&
+                         isWithinRateLimit(userId, 'debt_create');
         allow update: if isAuthenticated() && isOwner(userId) && 
-                         validateDebtData(request.resource.data);
+                         validateDebtData(request.resource.data) &&
+                         isWithinRateLimit(userId, 'debt_create');
         allow delete: if isAuthenticated() && isOwner(userId);
       }
     }

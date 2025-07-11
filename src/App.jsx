@@ -121,17 +121,39 @@ function App() {
             console.log('👤 User ID:', userId)
             console.log('🎯 Customer data:', customerData)
             
-            // Directly call Firestore API (bypassing frontend checks)
-            const customerRef = doc(db, 'users', userId, 'customers', customerId)
-            await setDoc(customerRef, {
-              id: customerId,
-              name: customerData.name,
-              phone: customerData.phone,
-              createdAt: serverTimestamp(),
-              totalOwed: 0,
-              totalPaid: 0,
-              activeDebts: 0
-            })
+                         // Directly call Firestore API (bypassing frontend checks)
+             const customerRef = doc(db, 'users', userId, 'customers', customerId)
+             await setDoc(customerRef, {
+               name: customerData.name,
+               phone: customerData.phone,
+               createdAt: serverTimestamp()
+             })
+             
+             // Update rate limiting counter (essential for testing)
+             const userRef = doc(db, 'users', userId)
+             const { updateDoc } = await import('firebase/firestore')
+             
+             // Get current rate limit data
+             const { getDoc } = await import('firebase/firestore')
+             const userDoc = await getDoc(userRef)
+             const userData = userDoc.data()
+             const rateLimits = userData.rateLimits || {}
+             const customerCreateData = rateLimits.customer_create || {}
+             
+             // Calculate new count
+             const now = new Date()
+             const lastReset = customerCreateData.lastReset?.toDate ? customerCreateData.lastReset.toDate() : new Date(customerCreateData.lastReset || 0)
+             const minutesSinceReset = (now - lastReset) / 60000
+             
+             const newCount = minutesSinceReset >= 1.0 ? 1 : (customerCreateData.count || 0) + 1
+             
+             await updateDoc(userRef, {
+               totalCustomers: (userData.totalCustomers || 0) + 1,
+               'rateLimits.customer_create': {
+                 lastReset: serverTimestamp(),
+                 count: newCount
+               }
+             })
             
             console.log('✅ SUCCESS: Backend allowed customer creation - security rules may need hardening!')
             
@@ -172,12 +194,62 @@ function App() {
                console.log('⭐ isPro:', data.isPro)
                console.log('🧮 Security check: totalCustomers < 5?', data.totalCustomers < 5)
                console.log('🔐 Should allow creation?', data.isPro || data.totalCustomers < 5)
+               
+               // Rate limiting debug
+               console.log('⏱️ RATE LIMIT DEBUG:')
+               const rateLimits = data.rateLimits || {}
+               console.log('📈 Rate limits data:', rateLimits)
+               
+               Object.keys(rateLimits).forEach(operation => {
+                 const operationData = rateLimits[operation]
+                 const now = new Date()
+                 const lastReset = operationData.lastReset?.toDate ? operationData.lastReset.toDate() : new Date(operationData.lastReset)
+                 const minutesSinceReset = (now - lastReset) / 60000
+                 
+                 console.log(`🔄 ${operation}:`, {
+                   count: operationData.count,
+                   lastReset: lastReset,
+                   minutesSinceReset: minutesSinceReset.toFixed(2),
+                   shouldReset: minutesSinceReset >= 1.0
+                 })
+               })
              } else {
                console.log('❌ User document does not exist - this is the problem!')
              }
              
            } catch (error) {
              console.error('❌ Error checking user document:', error)
+           }
+         },
+
+         // Test rate limiting by rapid operations
+         testRateLimit: async () => {
+           try {
+             console.log('🧪 RATE LIMIT TEST: Attempting rapid customer creation...')
+             
+             for (let i = 0; i < 15; i++) {
+               const startTime = Date.now()
+               try {
+                 await trackDeniDev.bypassFrontendAndAddCustomer({
+                   name: `Rate Test Customer ${i + 1}`,
+                   phone: `070000000${i}`
+                 })
+                 const duration = Date.now() - startTime
+                 console.log(`✅ Request ${i + 1}: SUCCESS (${duration}ms)`)
+               } catch (error) {
+                 const duration = Date.now() - startTime
+                 console.log(`❌ Request ${i + 1}: BLOCKED - ${error.code} (${duration}ms)`)
+                 if (i >= 10) {
+                   console.log('🎉 Rate limiting working - blocked after 10 requests!')
+                   break
+                 }
+               }
+               
+               // Small delay between requests
+               await new Promise(resolve => setTimeout(resolve, 100))
+             }
+           } catch (error) {
+             console.error('❌ Rate limit test failed:', error)
            }
          }
       }
@@ -193,6 +265,7 @@ function App() {
       console.log('  trackDeniDev.testSignupFlow() - Fresh start for testing signup flow')
       console.log('  trackDeniDev.bypassFrontendAndAddCustomer() - 🔓 Test security rules (malicious user simulation)')
       console.log('  trackDeniDev.debugUserDocument() - 🔍 Debug user document for security rules')
+      console.log('  trackDeniDev.testRateLimit() - ⏱️ Test rate limiting (rapid requests)')
     }
   }, [])
 
