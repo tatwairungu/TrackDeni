@@ -39,6 +39,17 @@ service cloud.firestore {
              data.status in ['unpaid', 'partial', 'paid'];
     }
     
+    // STEP 3: Pro tier business logic
+    function isProUser(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.isPro == true;
+    }
+    
+    function underFreeTierLimit(userId) {
+      // Free tier limit: 5 customers
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc.data.totalCustomers < 5;
+    }
+    
     // Rate limiting helper (basic implementation)
     function isWithinRateLimit() {
       // In a real implementation, you'd use a more sophisticated rate limiting
@@ -55,11 +66,12 @@ service cloud.firestore {
                        validateUserDataUpdate(request.resource.data);
       allow delete: if false; // Prevent user deletion
       
-      // Customer subcollection - STEP 2: Enable basic validation
+      // Customer subcollection - STEP 3: Add Pro tier enforcement
       match /customers/{customerId} {
         allow read: if isAuthenticated() && isOwner(userId);
         allow create: if isAuthenticated() && isOwner(userId) && 
-                         validateCustomerData(request.resource.data);
+                         validateCustomerData(request.resource.data) &&
+                         (isProUser(userId) || underFreeTierLimit(userId));
         allow update: if isAuthenticated() && isOwner(userId) && 
                          validateCustomerData(request.resource.data);
         allow delete: if isAuthenticated() && isOwner(userId);
