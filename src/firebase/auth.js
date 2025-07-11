@@ -43,6 +43,7 @@ export const signUpWithEmail = async (email, password, userData) => {
       joinedAt: serverTimestamp(),
       lastActive: serverTimestamp(),
       totalCustomers: 0,
+      totalDebts: 0,
       totalOwed: 0,
       totalPaid: 0
     })
@@ -113,6 +114,7 @@ export const signInWithGoogle = async () => {
         joinedAt: serverTimestamp(),
         lastActive: serverTimestamp(),
         totalCustomers: 0,
+        totalDebts: 0,
         totalOwed: 0,
         totalPaid: 0
       })
@@ -198,6 +200,7 @@ export const verifyPhoneCode = async (confirmationResult, code, userData = null)
         joinedAt: serverTimestamp(),
         lastActive: serverTimestamp(),
         totalCustomers: 0,
+        totalDebts: 0,
         totalOwed: 0,
         totalPaid: 0
       })

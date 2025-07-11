@@ -56,9 +56,32 @@ service cloud.firestore {
              userDoc.data.totalCustomers < 5;
     }
     
-    function canCreateCustomer(userId) {
-      // User must be Pro OR under free tier limit
-      return isProUser(userId) || underFreeTierLimit(userId);
+    // STEP 6: Pro tier caps (ENTERPRISE READY)
+    function withinProTierCustomerLimit(userId) {
+      // Pro tier limit: 10,000 customers max
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc.data.keys().hasAll(['totalCustomers']) && 
+             userDoc.data.totalCustomers < 10000;
+    }
+    
+    function withinProTierDebtLimit(userId) {
+      // Pro tier limit: 50,000 debts max
+      let userDoc = get(/databases/$(database)/documents/users/$(userId));
+      return userDoc.data.keys().hasAll(['totalDebts']) && 
+             userDoc.data.totalDebts < 50000;
+    }
+    
+    function canCreateCustomerWithCaps(userId) {
+      // Free tier: under 5 customers
+      // Pro tier: under 10,000 customers  
+      return (isProUser(userId) && withinProTierCustomerLimit(userId)) || 
+             (!isProUser(userId) && underFreeTierLimit(userId));
+    }
+    
+    function canCreateDebt(userId) {
+      // Free tier: unlimited debts (but limited by customer count)
+      // Pro tier: under 50,000 debts
+      return !isProUser(userId) || withinProTierDebtLimit(userId);
     }
     
     // STEP 4: Rate limiting implementation (PRODUCTION READY)
@@ -120,12 +143,12 @@ service cloud.firestore {
                        isWithinRateLimit(userId, 'user_update');
       allow delete: if false; // Prevent user deletion
       
-      // Customer subcollection - STEP 4: Add rate limiting to Pro tier enforcement
+      // Customer subcollection - STEP 6: Add Pro tier caps to customer creation
       match /customers/{customerId} {
         allow read: if isAuthenticated() && isOwner(userId);
         allow create: if isAuthenticated() && isOwner(userId) && 
                          validateCustomerData(request.resource.data) &&
-                         canCreateCustomer(userId) &&
+                         canCreateCustomerWithCaps(userId) &&
                          isWithinRateLimit(userId, 'customer_create');
         allow update: if isAuthenticated() && isOwner(userId) && 
                          validateCustomerData(request.resource.data) &&
@@ -133,11 +156,12 @@ service cloud.firestore {
         allow delete: if isAuthenticated() && isOwner(userId);
       }
       
-      // Debt subcollection - STEP 4: Add rate limiting to debt operations
+      // Debt subcollection - STEP 6: Add Pro tier caps to debt creation
       match /debts/{debtId} {
         allow read: if isAuthenticated() && isOwner(userId);
         allow create: if isAuthenticated() && isOwner(userId) && 
                          validateDebtData(request.resource.data) &&
+                         canCreateDebt(userId) &&
                          isWithinRateLimit(userId, 'debt_create');
         allow update: if isAuthenticated() && isOwner(userId) && 
                          validateDebtData(request.resource.data) &&

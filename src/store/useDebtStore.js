@@ -186,7 +186,14 @@ const useDebtStore = create(
               
               const newCount = minutesSinceReset >= 1.0 ? 1 : (debtCreateData.count || 0) + 1
               
+              // Calculate total debts across all customers
+              const newState = get()
+              const totalDebts = newState.customers.reduce((total, customer) => {
+                return total + customer.debts.length
+              }, 0)
+              
               await updateDoc(userRef, {
+                totalDebts: totalDebts,
                 'rateLimits.debt_create': {
                   lastReset: minutesSinceReset >= 1.0 ? serverTimestamp() : debtCreateData.lastReset,
                   count: newCount
