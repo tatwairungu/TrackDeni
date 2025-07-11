@@ -11,32 +11,35 @@ service cloud.firestore {
     }
     
     function validateUserDataUpdate(data) {
-      // TEMPORARY: Very basic validation to debug the issue
-      return true;
+      // STEP 5: Add size validation to user updates  
+      return validateUserSize(data);
     }
     
     function validateUserDataCreate(data) {
-      // STEP 1.2: Add basic field validation without complex requirements
+      // STEP 1.2 + 5: Add basic field validation + size limits
       return data.name is string && 
              data.name.size() >= 1 && 
              data.name.size() <= 100 &&
-             data.isPro is bool;
+             data.isPro is bool &&
+             validateUserSize(data);
     }
     
     function validateCustomerData(data) {
-      // STEP 2: Basic customer validation
+      // STEP 2 + 5: Basic customer validation + size limits
       return data.name is string && 
              data.name.size() >= 1 && 
-             data.name.size() <= 100;
+             data.name.size() <= 100 &&
+             validateCustomerSize(data);
     }
     
     function validateDebtData(data) {
-      // STEP 2: Basic debt validation
+      // STEP 2 + 5: Basic debt validation + size limits
       return data.customerId is string &&
              data.customerName is string &&
              data.amount is number &&
              data.amount >= 0 &&
-             data.status in ['unpaid', 'partial', 'paid'];
+             data.status in ['unpaid', 'partial', 'paid'] &&
+             validateDebtSize(data);
     }
     
     // STEP 3: Pro tier business logic (HARDENED)
@@ -80,6 +83,31 @@ service cloud.firestore {
       return !operationData.keys().hasAll(['lastReset', 'count']) ||
              (now.toMillis() - operationData.lastReset.toMillis()) / 60000 >= 1.0 ||
              operationData.count < currentLimit;
+    }
+    
+    // STEP 5: Document size limits (PRODUCTION READY)
+    // Simplified approach: validate individual field sizes instead of total document size
+    function validateCustomerSize(data) {
+      // Customer documents: Individual field limits
+      return (!data.keys().hasAny(['name']) || data.name.size() <= 100) &&
+             (!data.keys().hasAny(['phone']) || data.phone.size() <= 20) &&
+             (!data.keys().hasAny(['address']) || data.address.size() <= 200) &&
+             (!data.keys().hasAny(['notes']) || data.notes.size() <= 500);
+    }
+    
+    function validateDebtSize(data) {
+      // Debt documents: Individual field limits
+      return (!data.keys().hasAny(['description']) || data.description.size() <= 200) &&
+             (!data.keys().hasAny(['notes']) || data.notes.size() <= 300) &&
+             (!data.keys().hasAny(['customerName']) || data.customerName.size() <= 100);
+    }
+    
+    function validateUserSize(data) {
+      // User documents: Individual field limits (more generous for user profiles)
+      return (!data.keys().hasAny(['name']) || data.name.size() <= 100) &&
+             (!data.keys().hasAny(['phone']) || data.phone.size() <= 20) &&
+             (!data.keys().hasAny(['address']) || data.address.size() <= 200) &&
+             (!data.keys().hasAny(['bio']) || data.bio.size() <= 500);
     }
     
     // User documents - STEP 4: Add rate limiting to user operations

@@ -123,11 +123,19 @@ function App() {
             
                          // Directly call Firestore API (bypassing frontend checks)
              const customerRef = doc(db, 'users', userId, 'customers', customerId)
-             await setDoc(customerRef, {
+             
+             // Send all provided fields to test security rules properly
+             const documentData = {
                name: customerData.name,
                phone: customerData.phone,
                createdAt: serverTimestamp()
-             })
+             }
+             
+             // Add optional fields if provided
+             if (customerData.address) documentData.address = customerData.address
+             if (customerData.notes) documentData.notes = customerData.notes
+             
+             await setDoc(customerRef, documentData)
              
              // Update rate limiting counter (essential for testing)
              const userRef = doc(db, 'users', userId)
@@ -251,6 +259,87 @@ function App() {
            } catch (error) {
              console.error('❌ Rate limit test failed:', error)
            }
+         },
+
+                  // Test document size limits
+         testDocumentSizeLimits: async () => {
+           try {
+             console.log('📏 DOCUMENT SIZE LIMIT TEST: Testing field size restrictions...')
+             console.log('Expected: Normal size ✅, Oversized fields should be ❌ BLOCKED')
+             console.log('─'.repeat(60))
+             
+             // Test 1: Normal size customer (should work)
+             console.log('🧪 Test 1: Normal size customer (should pass)')
+             try {
+               await trackDeniDev.bypassFrontendAndAddCustomer({
+                 name: 'John Doe',
+                 phone: '0700000001'
+               })
+               console.log('✅ Result: PASSED - Normal size customer accepted')
+             } catch (error) {
+               console.log('❌ Result: FAILED - Normal size customer rejected:', error.code)
+             }
+             
+             // Test 2: Customer with oversized name (should fail)
+             console.log('\n🧪 Test 2: Oversized name (101+ chars, limit: 100)')
+             try {
+               const longName = 'A'.repeat(101) // 101 characters (over 100 limit)
+               await trackDeniDev.bypassFrontendAndAddCustomer({
+                 name: longName,
+                 phone: '0700000002'
+               })
+               console.log('❌ Result: SECURITY ISSUE - Oversized name was allowed!')
+             } catch (error) {
+               console.log('✅ Result: SECURITY WORKING - Oversized name blocked:', error.code)
+             }
+             
+             // Test 3: Customer with oversized phone (should fail)
+             console.log('\n🧪 Test 3: Oversized phone (21+ chars, limit: 20)')
+             try {
+               const longPhone = '0'.repeat(21) // 21 characters (over 20 limit)
+               await trackDeniDev.bypassFrontendAndAddCustomer({
+                 name: 'Valid Name',
+                 phone: longPhone
+               })
+               console.log('❌ Result: SECURITY ISSUE - Oversized phone was allowed!')
+             } catch (error) {
+               console.log('✅ Result: SECURITY WORKING - Oversized phone blocked:', error.code)
+             }
+             
+             // Test 4: Customer with oversized address (should fail)
+             console.log('\n🧪 Test 4: Oversized address (201+ chars, limit: 200)')
+             try {
+               const longAddress = 'X'.repeat(201) // 201 characters (over 200 limit)
+               await trackDeniDev.bypassFrontendAndAddCustomer({
+                 name: 'Valid Name',
+                 phone: '0700000003',
+                 address: longAddress
+               })
+               console.log('❌ Result: SECURITY ISSUE - Oversized address was allowed!')
+             } catch (error) {
+               console.log('✅ Result: SECURITY WORKING - Oversized address blocked:', error.code)
+             }
+             
+             // Test 5: Customer with oversized notes (should fail)
+             console.log('\n🧪 Test 5: Oversized notes (501+ chars, limit: 500)')
+             try {
+               const longNotes = 'N'.repeat(501) // 501 characters (over 500 limit)
+               await trackDeniDev.bypassFrontendAndAddCustomer({
+                 name: 'Valid Name',
+                 phone: '0700000004',
+                 notes: longNotes
+               })
+               console.log('❌ Result: SECURITY ISSUE - Oversized notes was allowed!')
+             } catch (error) {
+               console.log('✅ Result: SECURITY WORKING - Oversized notes blocked:', error.code)
+             }
+             
+             console.log('\n📏 Document size limit testing complete!')
+             console.log('─'.repeat(60))
+             
+           } catch (error) {
+             console.error('❌ Document size limit test failed:', error)
+           }
          }
       }
       
@@ -266,6 +355,7 @@ function App() {
       console.log('  trackDeniDev.bypassFrontendAndAddCustomer() - 🔓 Test security rules (malicious user simulation)')
       console.log('  trackDeniDev.debugUserDocument() - 🔍 Debug user document for security rules')
       console.log('  trackDeniDev.testRateLimit() - ⏱️ Test rate limiting (rapid requests)')
+      console.log('  trackDeniDev.testDocumentSizeLimits() - 📏 Test document size limits')
     }
   }, [])
 
