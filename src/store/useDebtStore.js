@@ -26,7 +26,7 @@ const useDebtStore = create(
       lastSignupPromptCustomerCount: 0,
 
       // Actions
-      addCustomer: (customerData) => {
+      addCustomer: async (customerData) => {
         const state = get()
         
         // Check free tier limit
@@ -46,6 +46,7 @@ const useDebtStore = create(
           createdAt: new Date().toISOString(),
         }
         
+        // Update local state first
         set((state) => {
           const newCustomerCount = state.customers.length + 1
           
@@ -70,10 +71,42 @@ const useDebtStore = create(
           }
         })
         
+        // If user is authenticated, sync to Firestore
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (auth.currentUser) {
+            const { db } = await import('../firebase/config.js')
+            const { doc, setDoc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+            
+            const userId = auth.currentUser.uid
+            
+            // Add customer to Firestore (only fields that pass security rules)
+            const customerRef = doc(db, 'users', userId, 'customers', newCustomer.id)
+            await setDoc(customerRef, {
+              name: newCustomer.name,
+              phone: newCustomer.phone,
+              createdAt: serverTimestamp()
+            })
+            
+            // Update user document's totalCustomers count
+            const userRef = doc(db, 'users', userId)
+            const newState = get()
+            await updateDoc(userRef, {
+              totalCustomers: newState.customers.length
+            })
+            
+            console.log('✅ Customer synced to Firestore successfully')
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync customer to Firestore:', error)
+          // Don't throw - local storage still works
+        }
+        
         return newCustomer.id
       },
 
-      addDebt: (customerId, debtData) => {
+      addDebt: async (customerId, debtData) => {
         const newDebt = {
           id: uuidv4(),
           amount: parseMonetaryAmount(debtData.amount),
@@ -85,6 +118,7 @@ const useDebtStore = create(
           createdAt: new Date().toISOString(),
         }
 
+        // Update local state first
         set((state) => ({
           customers: state.customers.map(customer => 
             customer.id === customerId 
@@ -93,6 +127,37 @@ const useDebtStore = create(
           ),
           error: null
         }))
+
+        // If user is authenticated, sync to Firestore
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (auth.currentUser) {
+            const { db } = await import('../firebase/config.js')
+            const { doc, setDoc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+            
+            const userId = auth.currentUser.uid
+            const state = get()
+            const customer = state.customers.find(c => c.id === customerId)
+            
+            if (customer) {
+              // Add debt to Firestore (only fields that pass security rules)
+              const debtRef = doc(db, 'users', userId, 'debts', newDebt.id)
+              await setDoc(debtRef, {
+                customerId: customerId,
+                customerName: customer.name,
+                amount: newDebt.amount,
+                status: 'unpaid'
+              })
+
+              
+              console.log('✅ Debt synced to Firestore successfully')
+            }
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync debt to Firestore:', error)
+          // Don't throw - local storage still works
+        }
 
         return newDebt.id
       },
@@ -327,13 +392,38 @@ const useDebtStore = create(
         return Math.max(0, FREE_TIER_LIMIT - state.customers.length)
       },
 
-      upgradeToProTier: () => {
+      upgradeToProTier: async () => {
+        // Update local state first
         set({ 
           userTier: 'pro',
           showUpgradePrompt: false,
           showProWelcome: true,
           error: null 
         })
+        
+        // If user is authenticated, sync to Firestore
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (auth.currentUser) {
+            const { db } = await import('../firebase/config.js')
+            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+            
+            const userId = auth.currentUser.uid
+            
+            // Update user document in Firestore
+            const userRef = doc(db, 'users', userId)
+            await updateDoc(userRef, {
+              isPro: true,
+              upgradedAt: serverTimestamp()
+            })
+            
+            console.log('✅ Pro upgrade synced to Firestore successfully')
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync Pro upgrade to Firestore:', error)
+          // Don't throw - local upgrade still works
+        }
       },
 
       // Upgrade prompt management

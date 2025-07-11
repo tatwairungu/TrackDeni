@@ -132,7 +132,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           return
         }
 
-        customerIdToUse = addCustomer({
+        customerIdToUse = await addCustomer({
           name: formData.name.trim(),
           phone: includePhone ? formData.phone.trim() : ''
         })
@@ -145,7 +145,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
       }
 
       // Add debt to customer
-      addDebt(customerIdToUse, {
+      await addDebt(customerIdToUse, {
         amount: parseMonetaryAmount(formData.amount),
         reason: formData.reason.trim(),
         dateBorrowed: formData.dateBorrowed,

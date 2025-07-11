@@ -39,15 +39,23 @@ service cloud.firestore {
              data.status in ['unpaid', 'partial', 'paid'];
     }
     
-    // STEP 3: Pro tier business logic
+    // STEP 3: Pro tier business logic (HARDENED)
     function isProUser(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.isPro == true;
     }
     
     function underFreeTierLimit(userId) {
       // Free tier limit: 5 customers
+      // For security rules, we'll use a more conservative approach
+      // Check if user document exists and has totalCustomers field
       let userDoc = get(/databases/$(database)/documents/users/$(userId));
-      return userDoc.data.totalCustomers < 5;
+      return userDoc.data.keys().hasAll(['totalCustomers']) && 
+             userDoc.data.totalCustomers < 5;
+    }
+    
+    function canCreateCustomer(userId) {
+      // User must be Pro OR under free tier limit
+      return isProUser(userId) || underFreeTierLimit(userId);
     }
     
     // Rate limiting helper (basic implementation)
@@ -66,12 +74,12 @@ service cloud.firestore {
                        validateUserDataUpdate(request.resource.data);
       allow delete: if false; // Prevent user deletion
       
-      // Customer subcollection - STEP 3: Add Pro tier enforcement
+      // Customer subcollection - STEP 3: Add Pro tier enforcement (HARDENED)
       match /customers/{customerId} {
         allow read: if isAuthenticated() && isOwner(userId);
         allow create: if isAuthenticated() && isOwner(userId) && 
                          validateCustomerData(request.resource.data) &&
-                         (isProUser(userId) || underFreeTierLimit(userId));
+                         canCreateCustomer(userId);
         allow update: if isAuthenticated() && isOwner(userId) && 
                          validateCustomerData(request.resource.data);
         allow delete: if isAuthenticated() && isOwner(userId);

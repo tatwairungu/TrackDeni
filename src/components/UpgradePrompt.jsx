@@ -12,10 +12,10 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
     setShowPaymentOptions(true)
   }
 
-  const handleMockUpgrade = () => {
+  const handleMockUpgrade = async () => {
     // For demo purposes, we'll just upgrade the user
     // In production, this would integrate with M-Pesa or other payment systems
-    upgradeToProTier()
+    await upgradeToProTier()
     onClose()
   }
 
