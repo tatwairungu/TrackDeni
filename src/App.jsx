@@ -37,7 +37,7 @@ function App() {
         },
         
         // Add test customers
-        addTestCustomers: (count = 5) => {
+        addTestCustomers: async (count = 5) => {
           const testCustomers = [
             { name: 'John Doe', phone: '0712345678', location: 'Nairobi CBD' },
             { name: 'Jane Smith', phone: '0723456789', location: 'Westlands' },
@@ -50,15 +50,15 @@ function App() {
           ]
           
           for (let i = 0; i < Math.min(count, testCustomers.length); i++) {
-            store.addCustomer(testCustomers[i])
+            await store.addCustomer(testCustomers[i])
           }
           console.log(`➕ Added ${Math.min(count, testCustomers.length)} test customers`)
         },
         
         // Complete test scenario
-        testUpgradeFlow: () => {
+        testUpgradeFlow: async () => {
           // Add 5 customers to hit the limit
-          window.trackDeniDev.addTestCustomers(5)
+          await window.trackDeniDev.addTestCustomers(5)
           // Show upgrade prompt
           setTimeout(() => {
             store.showUpgradeModal()
@@ -67,8 +67,8 @@ function App() {
         },
         
         // Direct upgrade to Pro
-        upgradeToPro: () => {
-          store.upgradeToProTier()
+        upgradeToPro: async () => {
+          await store.upgradeToProTier()
           console.log('⬆️ Upgraded to Pro tier')
         },
         
@@ -101,7 +101,85 @@ function App() {
           store.resetSignupEncouragement()
           store.clearAllData()
           console.log('🧪 Test setup complete - add customers to see encouragement modals')
-        }
+        },
+
+        // SECURITY TESTING: Bypass frontend validation and hit Firestore directly
+        bypassFrontendAndAddCustomer: async (customerData = { name: 'Malicious Customer', phone: '0700000000' }) => {
+          try {
+            const { auth, db } = await import('./firebase/config.js')
+            const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+            
+            if (!auth.currentUser) {
+              console.error('❌ Must be authenticated to test security rules')
+              return
+            }
+            
+            const userId = auth.currentUser.uid
+            const customerId = crypto.randomUUID()
+            
+            console.log('🔓 BYPASS ATTEMPT: Adding customer directly to Firestore, bypassing frontend validation...')
+            console.log('👤 User ID:', userId)
+            console.log('🎯 Customer data:', customerData)
+            
+            // Directly call Firestore API (bypassing frontend checks)
+            const customerRef = doc(db, 'users', userId, 'customers', customerId)
+            await setDoc(customerRef, {
+              id: customerId,
+              name: customerData.name,
+              phone: customerData.phone,
+              createdAt: serverTimestamp(),
+              totalOwed: 0,
+              totalPaid: 0,
+              activeDebts: 0
+            })
+            
+            console.log('✅ SUCCESS: Backend allowed customer creation - security rules may need hardening!')
+            
+          } catch (error) {
+            console.log('🛡️ BLOCKED: Backend security rules prevented customer creation')
+            console.log('Error code:', error.code)
+            console.log('Error message:', error.message)
+            
+                         if (error.code === 'permission-denied') {
+               console.log('🎉 SECURITY RULES WORKING: Permission denied as expected!')
+             }
+           }
+         },
+
+         // DEBUG: Check user document state for security rules debugging
+         debugUserDocument: async () => {
+           try {
+             const { auth, db } = await import('./firebase/config.js')
+             const { doc, getDoc } = await import('firebase/firestore')
+             
+             if (!auth.currentUser) {
+               console.error('❌ Must be authenticated to debug user document')
+               return
+             }
+             
+             const userId = auth.currentUser.uid
+             const userRef = doc(db, 'users', userId)
+             const userDoc = await getDoc(userRef)
+             
+             console.log('🔍 USER DOCUMENT DEBUG:')
+             console.log('👤 User ID:', userId)
+             console.log('📄 Document exists:', userDoc.exists())
+             
+             if (userDoc.exists()) {
+               const data = userDoc.data()
+               console.log('📊 User data:', data)
+               console.log('🔢 totalCustomers:', data.totalCustomers)
+               console.log('⭐ isPro:', data.isPro)
+               console.log('🧮 Security check: totalCustomers < 5?', data.totalCustomers < 5)
+               console.log('🔐 Should allow creation?', data.isPro || data.totalCustomers < 5)
+             } else {
+               console.log('❌ User document does not exist - this is the problem!')
+             }
+             
+           } catch (error) {
+             console.error('❌ Error checking user document:', error)
+           }
+         }
       }
       
       console.log('🛠️ TrackDeni Dev Tools Available:')
@@ -113,6 +191,8 @@ function App() {
       console.log('  trackDeniDev.showState() - Show current state')
       console.log('  trackDeniDev.resetSignupEncouragement() - Reset signup modals for testing')
       console.log('  trackDeniDev.testSignupFlow() - Fresh start for testing signup flow')
+      console.log('  trackDeniDev.bypassFrontendAndAddCustomer() - 🔓 Test security rules (malicious user simulation)')
+      console.log('  trackDeniDev.debugUserDocument() - 🔍 Debug user document for security rules')
     }
   }, [])
 
