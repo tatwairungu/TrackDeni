@@ -24,36 +24,19 @@ service cloud.firestore {
     }
     
     function validateCustomerData(data) {
-      return data.keys().hasAll(['name', 'createdAt']) &&
-             data.name is string &&
-             data.name.size() <= 100 &&
-             data.name.size() >= 1 &&
-             // Allow both timestamp and serverTimestamp() for createdAt
-             (data.createdAt is timestamp || data.createdAt == request.time) &&
-             (data.phone == null || data.phone is string) &&
-             (data.phoneNumber == null || data.phoneNumber is string) &&
-             (data.totalOwed == null || data.totalOwed is number) &&
-             (data.totalPaid == null || data.totalPaid is number) &&
-             (data.activeDebts == null || data.activeDebts is number) &&
-             (data.status == null || data.status is string) &&
-             (data.lastPaymentDate == null || data.lastPaymentDate is timestamp || data.lastPaymentDate == request.time) &&
-             (data.migratedAt == null || data.migratedAt is timestamp || data.migratedAt == request.time);
+      // STEP 2: Basic customer validation
+      return data.name is string && 
+             data.name.size() >= 1 && 
+             data.name.size() <= 100;
     }
     
     function validateDebtData(data) {
-      return data.keys().hasAll(['customerId', 'amount', 'status', 'createdAt']) &&
-             data.customerId is string &&
+      // STEP 2: Basic debt validation
+      return data.customerId is string &&
              data.customerName is string &&
              data.amount is number &&
              data.amount >= 0 &&
-             data.status in ['unpaid', 'partial', 'paid'] &&
-             // Allow both timestamp and serverTimestamp() for createdAt
-             (data.createdAt is timestamp || data.createdAt == request.time) &&
-             (data.reason == null || data.reason is string) &&
-             (data.dueDate == null || data.dueDate is timestamp || data.dueDate == request.time) &&
-             (data.dateBorrowed == null || data.dateBorrowed is timestamp || data.dateBorrowed == request.time) &&
-             (data.migratedAt == null || data.migratedAt is timestamp || data.migratedAt == request.time) &&
-             (data.payments == null || data.payments is list);
+             data.status in ['unpaid', 'partial', 'paid'];
     }
     
     // Rate limiting helper (basic implementation)
@@ -72,14 +55,24 @@ service cloud.firestore {
                        validateUserDataUpdate(request.resource.data);
       allow delete: if false; // Prevent user deletion
       
-      // Customer subcollection - TEMPORARILY VERY PERMISSIVE
+      // Customer subcollection - STEP 2: Enable basic validation
       match /customers/{customerId} {
-        allow read, write: if isAuthenticated() && isOwner(userId);
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow create: if isAuthenticated() && isOwner(userId) && 
+                         validateCustomerData(request.resource.data);
+        allow update: if isAuthenticated() && isOwner(userId) && 
+                         validateCustomerData(request.resource.data);
+        allow delete: if isAuthenticated() && isOwner(userId);
       }
       
-      // Debt subcollection - TEMPORARILY VERY PERMISSIVE
+      // Debt subcollection - STEP 2: Enable basic validation
       match /debts/{debtId} {
-        allow read, write: if isAuthenticated() && isOwner(userId);
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow create: if isAuthenticated() && isOwner(userId) && 
+                         validateDebtData(request.resource.data);
+        allow update: if isAuthenticated() && isOwner(userId) && 
+                         validateDebtData(request.resource.data);
+        allow delete: if isAuthenticated() && isOwner(userId);
       }
     }
     
