@@ -39,6 +39,14 @@ service cloud.firestore {
              data.amount is number &&
              data.amount >= 0 &&
              data.status in ['unpaid', 'partial', 'paid'] &&
+             // Allow essential debt fields for proper sync
+             (!data.keys().hasAny(['reason']) || (data.reason is string && data.reason.size() <= 200)) &&
+             (!data.keys().hasAny(['dateBorrowed']) || (data.dateBorrowed is string || data.dateBorrowed is timestamp)) &&
+             (!data.keys().hasAny(['dueDate']) || (data.dueDate is string || data.dueDate is timestamp || data.dueDate == null)) &&
+             (!data.keys().hasAny(['paid']) || data.paid is bool) &&
+             (!data.keys().hasAny(['payments']) || data.payments is list) &&
+             (!data.keys().hasAny(['createdAt']) || (data.createdAt is string || data.createdAt is timestamp)) &&
+             (!data.keys().hasAny(['updatedAt']) || (data.updatedAt is string || data.updatedAt is timestamp)) &&
              validateDebtSize(data);
     }
     
@@ -122,7 +130,9 @@ service cloud.firestore {
       // Debt documents: Individual field limits
       return (!data.keys().hasAny(['description']) || data.description.size() <= 200) &&
              (!data.keys().hasAny(['notes']) || data.notes.size() <= 300) &&
-             (!data.keys().hasAny(['customerName']) || data.customerName.size() <= 100);
+             (!data.keys().hasAny(['customerName']) || data.customerName.size() <= 100) &&
+             (!data.keys().hasAny(['reason']) || data.reason.size() <= 200) &&
+             (!data.keys().hasAny(['customerId']) || data.customerId.size() <= 100);
     }
     
     function validateUserSize(data) {

@@ -160,13 +160,19 @@ const useDebtStore = create(
             const customer = state.customers.find(c => c.id === customerId)
             
             if (customer) {
-              // Add debt to Firestore (only fields that pass security rules)
+              // Add debt to Firestore (save all fields that are expected by sync)
               const debtRef = doc(db, 'users', userId, 'debts', newDebt.id)
               await setDoc(debtRef, {
                 customerId: customerId,
                 customerName: customer.name,
                 amount: newDebt.amount,
-                status: 'unpaid'
+                reason: newDebt.reason,
+                dateBorrowed: newDebt.dateBorrowed,
+                dueDate: newDebt.dueDate,
+                paid: newDebt.paid,
+                payments: newDebt.payments,
+                status: newDebt.paid ? 'paid' : 'unpaid',
+                createdAt: serverTimestamp()
               })
 
               // Update rate limiting for debt creation
@@ -211,12 +217,13 @@ const useDebtStore = create(
         return newDebt.id
       },
 
-      addPayment: (customerId, debtId, paymentAmount) => {
+      addPayment: async (customerId, debtId, paymentAmount) => {
         const payment = {
           amount: parseMonetaryAmount(paymentAmount),
           date: new Date().toISOString(),
         }
 
+        // Update local state first
         set((state) => {
           const customer = state.customers.find(c => c.id === customerId)
           if (!customer) return state
@@ -317,9 +324,49 @@ const useDebtStore = create(
             error: null
           }
         })
+
+        // If user is authenticated, sync to Firestore
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (auth.currentUser) {
+            const { db } = await import('../firebase/config.js')
+            const { doc, updateDoc, serverTimestamp, getDoc } = await import('firebase/firestore')
+            
+            const userId = auth.currentUser.uid
+            
+            // Get current debt from Firestore
+            const debtRef = doc(db, 'users', userId, 'debts', debtId)
+            const debtDoc = await getDoc(debtRef)
+            
+            if (debtDoc.exists()) {
+              const currentDebt = debtDoc.data()
+              const currentPayments = currentDebt.payments || []
+              const updatedPayments = [...currentPayments, payment]
+              
+              // Calculate if debt is now fully paid
+              const totalPaid = updatedPayments.reduce((sum, p) => sum + p.amount, 0)
+              const isFullyPaid = totalPaid >= currentDebt.amount
+              
+              // Update debt in Firestore
+              await updateDoc(debtRef, {
+                payments: updatedPayments,
+                paid: isFullyPaid,
+                status: isFullyPaid ? 'paid' : 'partial',
+                updatedAt: serverTimestamp()
+              })
+              
+              console.log('✅ Payment synced to Firestore successfully')
+            }
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync payment to Firestore:', error)
+          // Don't throw - local storage still works
+        }
       },
 
-      markDebtAsPaid: (customerId, debtId) => {
+      markDebtAsPaid: async (customerId, debtId) => {
+        // Update local state first
         set((state) => ({
           customers: state.customers.map(customer => 
             customer.id === customerId 
@@ -335,6 +382,31 @@ const useDebtStore = create(
           ),
           error: null
         }))
+
+        // If user is authenticated, sync to Firestore
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (auth.currentUser) {
+            const { db } = await import('../firebase/config.js')
+            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+            
+            const userId = auth.currentUser.uid
+            
+            // Update debt status in Firestore
+            const debtRef = doc(db, 'users', userId, 'debts', debtId)
+            await updateDoc(debtRef, {
+              paid: true,
+              status: 'paid',
+              updatedAt: serverTimestamp()
+            })
+            
+            console.log('✅ Debt status synced to Firestore successfully')
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync debt status to Firestore:', error)
+          // Don't throw - local storage still works
+        }
       },
 
       deleteCustomer: (customerId) => {
