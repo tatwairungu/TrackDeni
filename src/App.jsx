@@ -462,7 +462,7 @@ function App() {
            } catch (error) {
              console.error('❌ Pro tier caps test failed:', error)
            }
-         }
+        }
       }
       
       console.log('🛠️ TrackDeni Dev Tools Available:')
@@ -585,17 +585,17 @@ function App() {
   return (
     <AuthGuard requireAuth={false}>
       {({ user, signIn, signOut }) => (
-        <div className="relative">
+    <div className="relative">
           <OfflineIndicator />
           {renderCurrentPage(user, signIn, signOut)}
-          {tutorial.isActive && (
-            <InteractiveTutorial 
-              currentStep={tutorial.currentStep}
-              onComplete={tutorial.completeTutorial}
-            />
-          )}
+      {tutorial.isActive && (
+        <InteractiveTutorial 
+          currentStep={tutorial.currentStep}
+          onComplete={tutorial.completeTutorial}
+        />
+      )}
           <PWAInstallPrompt />
-        </div>
+    </div>
       )}
     </AuthGuard>
   )

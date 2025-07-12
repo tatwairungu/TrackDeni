@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getTodayDate, addDays } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
 import UpgradePrompt from './UpgradePrompt'
+import SimpleToggle from './SimpleToggle'
 
 // Helper function to safely parse monetary amounts (fixes floating point precision)
 const parseMonetaryAmount = (amount) => {
@@ -262,20 +263,11 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
                 <span className={`text-sm transition-colors ${includePhone ? 'text-gray-600' : 'text-gray-400'}`}>
                   {includePhone ? 'Required' : 'Optional'}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setIncludePhone(!includePhone)}
-                  className={`relative inline-flex h-6 w-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                    includePhone ? 'bg-primary shadow-md' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-200 ease-in-out ${
-                      includePhone ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-                    style={{ marginTop: '2px' }}
-                  />
-                </button>
+                <SimpleToggle
+                  enabled={includePhone}
+                  onToggle={() => setIncludePhone(!includePhone)}
+                  label="Toggle phone number requirement"
+                />
               </div>
             </div>
             
@@ -393,20 +385,11 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
                 <span className={`text-sm transition-colors ${includeDueDate ? 'text-gray-600' : 'text-gray-400'}`}>
                   {includeDueDate ? 'Set date' : 'Open-ended'}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setIncludeDueDate(!includeDueDate)}
-                  className={`relative inline-flex h-6 w-11 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                    includeDueDate ? 'bg-primary shadow-md' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 rounded-full bg-white shadow-lg transform transition-transform duration-200 ease-in-out ${
-                      includeDueDate ? 'translate-x-5' : 'translate-x-0.5'
-                    }`}
-                    style={{ marginTop: '2px' }}
-                  />
-                </button>
+                <SimpleToggle
+                  enabled={includeDueDate}
+                  onToggle={() => setIncludeDueDate(!includeDueDate)}
+                  label="Toggle due date requirement"
+                />
               </div>
             </div>
             

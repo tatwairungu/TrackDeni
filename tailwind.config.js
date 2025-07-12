@@ -10,6 +10,7 @@ export default {
         primary: '#10b981',
         'primary-dark': '#059669',
         'primary-light': '#34d399',
+        accent: '#f59e0b', // Added missing accent color (amber)
         success: '#10b981',
         danger: '#ef4444',
         warning: '#f59e0b',
