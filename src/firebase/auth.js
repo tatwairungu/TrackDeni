@@ -273,7 +273,14 @@ export const getUserDocument = async (userId) => {
 export const signOutUser = async () => {
   try {
     await signOut(auth)
-    return { success: true }
+    
+    // Clear local store data to prevent data from remaining on screen
+    localStorage.removeItem('trackdeni-storage')
+    
+    // Force page reload to ensure clean state
+    window.location.reload()
+    
+    return { success: true, message: 'Successfully logged out' }
   } catch (error) {
     console.error('Sign out error:', error)
     return { success: false, error: error.message }

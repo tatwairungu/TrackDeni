@@ -356,6 +356,10 @@ const syncFirestoreToLocal = async (userId) => {
   try {
     console.log('🔄 Syncing Firestore data to local for user:', userId)
     
+    // Get current local data before sync
+    const existingLocalData = getLocalData()
+    const hasLocalData = existingLocalData && existingLocalData.customers && existingLocalData.customers.length > 0
+    
     // Get customers from Firestore
     const customersRef = collection(db, 'users', userId, 'customers')
     const customersSnapshot = await getDocs(customersRef)
@@ -364,8 +368,8 @@ const syncFirestoreToLocal = async (userId) => {
     const debtsRef = collection(db, 'users', userId, 'debts')
     const debtsSnapshot = await getDocs(debtsRef)
     
-    // Build local data structure
-    const customers = []
+    // Build cloud data structure
+    const cloudCustomers = []
     const debtsMap = new Map()
     
     // Group debts by customer
@@ -391,7 +395,7 @@ const syncFirestoreToLocal = async (userId) => {
     // Build customers array
     customersSnapshot.forEach(doc => {
       const customer = { id: doc.id, ...doc.data() }
-      customers.push({
+      cloudCustomers.push({
         id: customer.id,
         name: customer.name,
         phone: customer.phone,
@@ -400,28 +404,83 @@ const syncFirestoreToLocal = async (userId) => {
       })
     })
     
-    // Update local store
-    const localData = {
-      customers,
-      userTier: 'free', // Default tier
-      showUpgradePrompt: false,
-      showProWelcome: false
+    const hasCloudData = cloudCustomers.length > 0
+    
+    console.log('📊 Data sync check:', {
+      hasLocalData,
+      localCustomers: hasLocalData ? existingLocalData.customers.length : 0,
+      hasCloudData,
+      cloudCustomers: cloudCustomers.length
+    })
+    
+    // SIMPLIFIED LOGIC: Prioritize cloud data when user logs in (expected behavior)
+    if (hasCloudData) {
+      console.log('☁️ Loading user\'s cloud data')
+      
+      // If there's conflicting local data, show a quick notification
+      if (hasLocalData) {
+        console.log('⚠️ Replacing local data with user\'s cloud data')
+      }
+      
+      // Always load the user's cloud data when they log in
+      await replaceLocalWithCloud(cloudCustomers)
+      return { success: true, customers: cloudCustomers.length, action: 'loaded_cloud' }
+    } else if (hasLocalData) {
+      console.log('💾 No cloud data, keeping local data for potential migration')
+      // No cloud data, keep local data but mark it for potential migration
+      return { success: true, customers: existingLocalData.customers.length, action: 'kept_local' }
+    } else {
+      console.log('📭 No data to sync - fresh start')
+      // No data at all - clear everything to ensure clean state
+      await clearStoreData()
+      return { success: true, customers: 0, action: 'no_data' }
     }
-    
-    // Save to localStorage
-    localStorage.setItem('trackdeni-storage', JSON.stringify({
-      state: localData,
-      version: 1
-    }))
-    
-    console.log(`✅ Sync complete: ${customers.length} customers loaded`)
-    
-    return { success: true, customers: customers.length }
     
   } catch (error) {
     console.error('❌ Error syncing Firestore data:', error)
     return { success: false, error: error.message }
   }
+}
+
+// Helper function to replace local data with cloud data
+const replaceLocalWithCloud = async (cloudCustomers) => {
+  // Update local store data
+  const localData = {
+    customers: cloudCustomers,
+    userTier: 'free', // Default tier
+    showUpgradePrompt: false,
+    showProWelcome: false
+  }
+  
+  // Save to localStorage for persistence
+  localStorage.setItem('trackdeni-storage', JSON.stringify({
+    state: localData,
+    version: 1
+  }))
+  
+  // Update Zustand store directly so UI reflects the synced data
+  const { default: useDebtStore } = await import('../store/useDebtStore.js')
+  const store = useDebtStore.getState()
+  
+  // Update the store with cloud data
+  store.loadCustomers(cloudCustomers)
+  
+  console.log(`✅ Local data replaced with cloud data: ${cloudCustomers.length} customers`)
+}
+
+// Helper function to clear store data
+const clearStoreData = async () => {
+  // Clear localStorage
+  localStorage.removeItem('trackdeni-storage')
+  
+  // Update Zustand store to empty state
+  const { default: useDebtStore } = await import('../store/useDebtStore.js')
+  const store = useDebtStore.getState()
+  
+  // Clear the store
+  store.loadCustomers([])
+  
+  console.log('🗑️ Store data cleared for fresh start')
 }
 
 // Helper functions

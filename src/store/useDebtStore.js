@@ -537,6 +537,16 @@ const useDebtStore = create(
         error: null 
       }),
       clearAllData: () => set({ customers: [], error: null, userTier: 'free', showUpgradePrompt: false, showProWelcome: false }),
+
+      // Load customers from cloud sync
+      loadCustomers: (customers) => {
+        console.log('📊 Loading customers from cloud sync:', customers.length)
+        set({ 
+          customers: customers, 
+          error: null,
+          isLoading: false 
+        })
+      },
     }),
     {
       name: 'trackdeni-storage', // localStorage key

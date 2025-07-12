@@ -138,7 +138,16 @@ const AuthGuard = ({ children, requireAuth = false }) => {
 
   const handleSignOut = async () => {
     try {
-      await auth.signOut()
+      const { signOutUser } = await import('../firebase/auth')
+      const result = await signOutUser()
+      
+      if (result.success) {
+        console.log('✅ User signed out successfully')
+        // Note: signOutUser handles page reload and data clearing
+      } else {
+        console.error('❌ Sign out failed:', result.error)
+      }
+      
       closeAllModals()
     } catch (error) {
       console.error('Error signing out:', error)
