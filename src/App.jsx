@@ -5,6 +5,8 @@ import CustomerDetail from './pages/CustomerDetail'
 import OnboardingFlow from './components/OnboardingFlow'
 import InteractiveTutorial from './components/InteractiveTutorial'
 import AuthGuard from './components/AuthGuard'
+import PWAInstallPrompt from './components/PWAInstallPrompt'
+import OfflineIndicator from './components/OfflineIndicator'
 import { useTutorial } from './hooks/useTutorial'
 import useDebtStore from './store/useDebtStore'
 
@@ -584,6 +586,7 @@ function App() {
     <AuthGuard requireAuth={false}>
       {({ user, signIn, signOut }) => (
         <div className="relative">
+          <OfflineIndicator />
           {renderCurrentPage(user, signIn, signOut)}
           {tutorial.isActive && (
             <InteractiveTutorial 
@@ -591,6 +594,7 @@ function App() {
               onComplete={tutorial.completeTutorial}
             />
           )}
+          <PWAInstallPrompt />
         </div>
       )}
     </AuthGuard>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackDeni PWA Icon Generator</title>
+    <style>
+        body {
+            font-family: Inter, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f9f9f9;
+        }
+        .icon-preview {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        .icon {
+            width: 64px;
+            height: 64px;
+            background: #27AE60;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .size-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .svg-source {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>TrackDeni PWA Icon Generator</h1>
+    
+    <div class="instructions">
+        <h2>Icon Requirements</h2>
+        <p>The following icon sizes are needed for optimal PWA support:</p>
+        
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">72x72</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">96x96</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">128x128</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">144x144</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">152x152</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">192x192</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">384x384</div>
+        </div>
+        <div class="icon-preview">
+            <div class="icon">TD</div>
+            <div class="size-label">512x512</div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h2>Base SVG Icon</h2>
+        <p>Use this SVG as the base for generating all required icon sizes:</p>
+        
+        <div class="svg-source">
+&lt;svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"&gt;
+  &lt;!-- Background with rounded corners --&gt;
+  &lt;rect width="512" height="512" rx="80" ry="80" fill="#27AE60"/&gt;
+  
+  &lt;!-- Main TD text --&gt;
+  &lt;text x="256" y="320" text-anchor="middle" fill="white" 
+        font-family="Inter, -apple-system, sans-serif" 
+        font-weight="700" 
+        font-size="200"&gt;TD&lt;/text&gt;
+  
+  &lt;!-- Small subtitle --&gt;
+  &lt;text x="256" y="380" text-anchor="middle" fill="rgba(255,255,255,0.8)" 
+        font-family="Inter, -apple-system, sans-serif" 
+        font-weight="400" 
+        font-size="36"&gt;DEBT TRACKER&lt;/text&gt;
+&lt;/svg&gt;
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h2>Generation Instructions</h2>
+        <ol>
+            <li>Copy the SVG code above and save it as <code>trackdeni-icon.svg</code></li>
+            <li>Use an online SVG to PNG converter or design tool to create the following files:</li>
+            <ul>
+                <li>icon-72x72.png</li>
+                <li>icon-96x96.png</li>
+                <li>icon-128x128.png</li>
+                <li>icon-144x144.png</li>
+                <li>icon-152x152.png</li>
+                <li>icon-192x192.png</li>
+                <li>icon-384x384.png</li>
+                <li>icon-512x512.png</li>
+            </ul>
+            <li>Place all PNG files in the <code>public/icons/</code> directory</li>
+            <li>Also create shortcut icons: <code>add-customer-96x96.png</code> and <code>add-debt-96x96.png</code></li>
+        </ol>
+
+        <h3>Quick Online Tools:</h3>
+        <ul>
+            <li><a href="https://realfavicongenerator.net/" target="_blank">Real Favicon Generator</a></li>
+            <li><a href="https://www.pwabuilder.com/imageGenerator" target="_blank">PWA Builder Image Generator</a></li>
+            <li><a href="https://favicon.io/favicon-converter/" target="_blank">Favicon.io Converter</a></li>
+        </ul>
+
+        <h3>Maskable Icons:</h3>
+        <p>For best results on Android, ensure your icons work well as "maskable" icons with safe areas for the content.</p>
+    </div>
+
+    <div class="instructions">
+        <h2>Alternative: Simplified Setup</h2>
+        <p>For quick testing, you can temporarily:</p>
+        <ol>
+            <li>Create a single 512x512 PNG and copy it to all required sizes</li>
+            <li>Use online favicon generators to create a complete icon set</li>
+            <li>Update the manifest.json paths to match your generated files</li>
+        </ol>
+    </div>
+
+</body>
+</html> 
