@@ -279,6 +279,9 @@ export const getPerformanceRecommendations = () => {
 
 // Complete Device Profile
 export const getDeviceProfile = () => {
+  const liteModeRecommendation = isLiteModeRecommended()
+  const liteModeState = shouldUseLiteMode()
+  
   return {
     // Hardware
     memory: getDeviceMemory(),
@@ -303,6 +306,10 @@ export const getDeviceProfile = () => {
     isMobile: isMobileDevice(),
     isAndroidGo: isAndroidGo(),
     
+    // Lite Mode
+    liteModeRecommendation,
+    liteModeState,
+    
     // Recommendations
     recommendations: getPerformanceRecommendations(),
     
@@ -325,6 +332,172 @@ export const logDeviceProfile = () => {
     console.log('Device Class:', profile.deviceClass)
     console.log('Is Low-End:', profile.isLowEnd)
     console.log('Recommendations:', profile.recommendations)
+    console.groupEnd()
+  }
+} 
+
+// Lite Mode Detection
+export const isLiteModeRecommended = () => {
+  const memory = getDeviceMemory()
+  const cores = getCPUCores()
+  const network = getNetworkInfo()
+  const deviceType = getDeviceType()
+  const platform = getPlatform()
+  
+  // Definitely recommend Lite Mode for very low-end devices
+  if (memory <= 1) {
+    return {
+      recommended: true,
+      reason: 'Very low memory detected (≤1GB)',
+      priority: 'high'
+    }
+  }
+  
+  // Android Go devices should use Lite Mode
+  if (isAndroidGo()) {
+    return {
+      recommended: true,
+      reason: 'Android Go device detected',
+      priority: 'high'
+    }
+  }
+  
+  // Low memory + low CPU combination
+  if (memory <= 2 && cores <= 2) {
+    return {
+      recommended: true,
+      reason: 'Limited memory and CPU resources',
+      priority: 'high'
+    }
+  }
+  
+  // Low memory + slow network combination
+  if (memory <= 2 && isSlowNetwork()) {
+    return {
+      recommended: true,
+      reason: 'Limited memory with slow network',
+      priority: 'medium'
+    }
+  }
+  
+  // Very slow network (2G) regardless of device specs
+  if (network.effectiveType === '2g' || network.effectiveType === 'slow-2g') {
+    return {
+      recommended: true,
+      reason: 'Very slow network connection (2G)',
+      priority: 'medium'
+    }
+  }
+  
+  // Mobile devices with limited resources
+  if (deviceType === 'mobile' && memory <= 3 && cores <= 4) {
+    return {
+      recommended: true,
+      reason: 'Mobile device with limited resources',
+      priority: 'low'
+    }
+  }
+  
+  // No recommendation for Lite Mode
+  return {
+    recommended: false,
+    reason: 'Device has sufficient resources',
+    priority: 'none'
+  }
+}
+
+// Lite Mode State Management
+export const getLiteModeState = () => {
+  try {
+    const stored = localStorage.getItem('trackdeni-lite-mode')
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
+  
+  return null
+}
+
+export const setLiteModeState = (enabled, reason = '', autoEnabled = false) => {
+  const state = {
+    enabled,
+    reason,
+    autoEnabled,
+    setAt: new Date().toISOString()
+  }
+  
+  try {
+    localStorage.setItem('trackdeni-lite-mode', JSON.stringify(state))
+  } catch (e) {
+    console.warn('Failed to save Lite Mode state:', e)
+  }
+  
+  return state
+}
+
+export const shouldUseLiteMode = () => {
+  // Check if user has manually set preference
+  const storedState = getLiteModeState()
+  if (storedState !== null) {
+    return {
+      enabled: storedState.enabled,
+      reason: storedState.reason,
+      source: storedState.autoEnabled ? 'auto' : 'manual'
+    }
+  }
+  
+  // Auto-detect if no preference set
+  const recommendation = isLiteModeRecommended()
+  if (recommendation.recommended) {
+    // Auto-enable Lite Mode for recommended devices
+    const state = setLiteModeState(true, recommendation.reason, true)
+    return {
+      enabled: true,
+      reason: recommendation.reason,
+      source: 'auto-enabled'
+    }
+  }
+  
+  // Default to normal mode for capable devices
+  return {
+    enabled: false,
+    reason: 'Device has sufficient resources',
+    source: 'auto-disabled'
+  }
+}
+
+// Manual Lite Mode Controls
+export const enableLiteMode = (reason = 'Manually enabled') => {
+  return setLiteModeState(true, reason, false)
+}
+
+export const disableLiteMode = (reason = 'Manually disabled') => {
+  return setLiteModeState(false, reason, false)
+}
+
+export const resetLiteModePreference = () => {
+  try {
+    localStorage.removeItem('trackdeni-lite-mode')
+    return true
+  } catch (e) {
+    console.warn('Failed to reset Lite Mode preference:', e)
+    return false
+  }
+}
+
+// Development helpers
+export const logLiteModeStatus = () => {
+  if (process.env.NODE_ENV === 'development') {
+    const liteModeState = shouldUseLiteMode()
+    const recommendation = isLiteModeRecommended()
+    const storedState = getLiteModeState()
+    
+    console.group('💡 Lite Mode Status')
+    console.log('Current State:', liteModeState)
+    console.log('Recommendation:', recommendation)
+    console.log('Stored Preference:', storedState)
     console.groupEnd()
   }
 } 

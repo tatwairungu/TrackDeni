@@ -512,6 +512,74 @@ function App() {
           localStorage.removeItem('trackdeni-dismissed-warnings')
           console.log('✅ Performance warnings reset')
           console.log('💡 Refresh page to see warnings again')
+        },
+
+        // Lite Mode Testing
+        testLiteMode: async () => {
+          const { logLiteModeStatus } = await import('./utils/deviceDetection.js')
+          logLiteModeStatus()
+        },
+        
+        simulateLiteModeDevice: () => {
+          console.log('🔧 Simulating device that needs Lite Mode...')
+          
+          // Override device detection for Lite Mode testing
+          Object.defineProperty(navigator, 'deviceMemory', {
+            value: 1, // Very low memory
+            writable: true
+          })
+          
+          Object.defineProperty(navigator, 'hardwareConcurrency', {
+            value: 2, // Low CPU cores
+            writable: true
+          })
+          
+          // Clear existing lite mode preference to trigger auto-detection
+          localStorage.removeItem('trackdeni-lite-mode')
+          
+          console.log('✅ Lite Mode device simulation active')
+          console.log('💡 Refresh page to see Lite Mode auto-enable')
+        },
+        
+        forceLiteMode: async () => {
+          const { enableLiteMode } = await import('./utils/deviceDetection.js')
+          enableLiteMode('Force enabled via dev tools')
+          console.log('💡 Lite Mode force enabled')
+          console.log('💡 Refresh page to see changes')
+        },
+        
+        disableLiteMode: async () => {
+          const { disableLiteMode } = await import('./utils/deviceDetection.js')
+          disableLiteMode('Force disabled via dev tools')
+          console.log('💡 Lite Mode force disabled')
+          console.log('💡 Refresh page to see changes')
+        },
+        
+        resetLiteMode: async () => {
+          const { resetLiteModePreference } = await import('./utils/deviceDetection.js')
+          resetLiteModePreference()
+          console.log('🔄 Lite Mode preference reset')
+          console.log('💡 Refresh page for auto-detection')
+        },
+        
+        testLiteModeFlow: () => {
+          console.log('🧪 Testing complete Lite Mode flow...')
+          
+          // Step 1: Reset everything
+          localStorage.removeItem('trackdeni-lite-mode')
+          localStorage.removeItem('trackdeni-dismissed-warnings')
+          
+          // Step 2: Simulate low-end device
+          Object.defineProperty(navigator, 'deviceMemory', {
+            value: 1,
+            writable: true
+          })
+          
+          console.log('✅ Test setup complete')
+          console.log('💡 Refresh page to see:')
+          console.log('   • Auto Lite Mode enablement')
+          console.log('   • Lite Mode indicator')
+          console.log('   • Performance optimizations')
         }
       }
       
@@ -532,6 +600,12 @@ function App() {
       console.log('  trackDeniDev.simulateLowEndDevice() - 🔧 Simulate low-end device')
       console.log('  trackDeniDev.resetDeviceSimulation() - 🔄 Reset device simulation')
       console.log('  trackDeniDev.testPerformanceWarnings() - ⚠️ Test performance warnings')
+      console.log('  trackDeniDev.testLiteMode() - 📊 Test Lite Mode status')
+      console.log('  trackDeniDev.simulateLiteModeDevice() - 🔧 Simulate Lite Mode device')
+      console.log('  trackDeniDev.forceLiteMode() - 💡 Force Lite Mode on')
+      console.log('  trackDeniDev.disableLiteMode() - 💡 Force Lite Mode off')
+      console.log('  trackDeniDev.resetLiteMode() - 🔄 Reset Lite Mode preference')
+      console.log('  trackDeniDev.testLiteModeFlow() - 🧪 Test complete Lite Mode flow')
     }
   }, [])
 

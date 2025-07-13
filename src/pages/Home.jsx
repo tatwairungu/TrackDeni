@@ -5,6 +5,7 @@ import Header from '../components/Header'
 import UpgradePrompt from '../components/UpgradePrompt'
 import ProWelcomeModal from '../components/ProWelcomeModal'
 import PerformanceWarning from '../components/PerformanceWarning'
+import LiteModeIndicator from '../components/LiteModeIndicator'
 
 const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
   const { 
@@ -187,6 +188,9 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">
         {/* Performance Warnings */}
         <PerformanceWarning />
+        
+        {/* Lite Mode Indicator */}
+        <LiteModeIndicator />
         
         {/* Summary Stats */}
         <div className="card">
