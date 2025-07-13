@@ -621,6 +621,145 @@ function App() {
           console.log('   • 15 customers per page (smaller page size)')
           console.log('   • Pagination controls')
           console.log('💡 Refresh page to see changes')
+        },
+
+        // Storage Testing
+        testStorageSystem: async () => {
+          try {
+            const { storage } = await import('./utils/storage.js')
+            
+            console.log('🗄️ Testing storage system...')
+            
+            // Get storage info
+            const info = await storage.getStorageInfo()
+            console.log('📊 Storage Info:', info)
+            
+            // Test simple write/read
+            const testData = { test: 'data', timestamp: Date.now() }
+            console.log('📝 Writing test data...')
+            await storage.setData(testData)
+            
+            console.log('📖 Reading test data...')
+            const readData = await storage.getData()
+            console.log('📊 Read data:', readData)
+            
+            console.log('✅ Storage test complete')
+          } catch (error) {
+            console.error('❌ Storage test failed:', error)
+          }
+        },
+        
+        showStorageInfo: async () => {
+          try {
+            console.log('🗄️ Getting storage information...')
+            const { storage } = await import('./utils/storage.js')
+            
+            console.log('📊 Waiting for storage initialization...')
+            const info = await storage.getStorageInfo()
+            
+            console.log('🗄️ Storage System Information:')
+            console.log(`  Type: ${info.type}`)
+            console.log(`  Available: ${info.available}`)
+            console.log(`  Capacity: ${info.capacity}`)
+            console.log(`  Performance: ${info.performance}`)
+            console.log(`  Features: ${info.features.join(', ')}`)
+            
+            if (info.type === 'IndexedDB') {
+              console.log('✅ Using IndexedDB - Optimal performance!')
+            } else {
+              console.log('⚠️ Fallback to localStorage - Limited capacity')
+            }
+          } catch (error) {
+            console.error('❌ Failed to get storage info:', error)
+          }
+        },
+
+        migrateToIndexedDB: async () => {
+          console.log('📦 Testing IndexedDB migration...')
+          
+          // Force re-initialization to test migration
+          const { storage } = await import('./utils/storage.js')
+          await storage.manager.migrateFromLocalStorage()
+          
+          console.log('✅ Migration test complete')
+          console.log('💡 Check console for migration results')
+        },
+
+        testStoragePerformance: async () => {
+          const { storage } = await import('./utils/storage.js')
+          
+          console.log('⚡ Testing storage performance with large dataset...')
+          
+          // Generate large test data
+          const largeData = {
+            customers: Array.from({ length: 100 }, (_, i) => ({
+              id: `perf-test-${i}`,
+              name: `Test Customer ${i}`,
+              phone: `+254${700000000 + i}`,
+              debts: Array.from({ length: 5 }, (_, j) => ({
+                id: `debt-${i}-${j}`,
+                amount: 1000 + (i * 100) + (j * 10),
+                reason: `Test debt ${j}`,
+                dateBorrowed: new Date().toISOString(),
+                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                paid: false,
+                payments: []
+              }))
+            })),
+            userTier: 'pro',
+            createdAt: new Date().toISOString()
+          }
+          
+          console.log(`📊 Testing with ${largeData.customers.length} customers, ${largeData.customers.length * 5} debts`)
+          
+          // Test write performance
+          const writeTime = await storage.measurePerformance(
+            async (data) => await storage.setData(data),
+            largeData
+          )
+          
+          // Test read performance
+          const readTime = await storage.measurePerformance(
+            async () => await storage.getData(),
+            null
+          )
+          
+          console.log('✅ Performance test complete')
+          console.log(`📊 Large dataset: Write ${writeTime.toFixed(2)}ms, Read ${readTime.toFixed(2)}ms`)
+          
+          // Clean up test data
+          await storage.clearData()
+          console.log('🧹 Test data cleared')
+        },
+
+        // Simple debug function
+        debugStorage: async () => {
+          console.log('🐛 Debug: Starting storage debug...')
+          
+          try {
+            console.log('🐛 Debug: Checking IndexedDB availability...')
+            console.log('IndexedDB available:', !!window.indexedDB)
+            
+            console.log('🐛 Debug: Importing storage module...')
+            const storageModule = await import('./utils/storage.js')
+            console.log('🐛 Debug: Storage module imported:', !!storageModule.storage)
+            
+            console.log('🐛 Debug: Accessing storage manager...')
+            const manager = storageModule.storage.manager
+            console.log('🐛 Debug: Manager available:', !!manager)
+            console.log('🐛 Debug: Manager initialized:', manager.isIndexedDBAvailable)
+            
+            console.log('🐛 Debug: Testing basic operations...')
+            await manager.ensureReady()
+            console.log('🐛 Debug: Manager ready!')
+            
+            const info = await storageModule.storage.getStorageInfo()
+            console.log('🐛 Debug: Storage info retrieved:', info)
+            
+          } catch (error) {
+            console.error('🐛 Debug: Error occurred:', error)
+            console.error('🐛 Debug: Error stack:', error.stack)
+          }
         }
       }
       
@@ -650,6 +789,11 @@ function App() {
       console.log('  trackDeniDev.addPaginationTestData(30) - 📄 Add test customers for pagination')
       console.log('  trackDeniDev.testPagination() - 📄 Test pagination with 50 customers')
       console.log('  trackDeniDev.testLiteModeWithPagination() - 📄 Test Lite Mode pagination')
+      console.log('  trackDeniDev.testStorageSystem() - 🗄️ Test IndexedDB storage system')
+      console.log('  trackDeniDev.showStorageInfo() - 🗄️ Show storage system information')
+      console.log('  trackDeniDev.migrateToIndexedDB() - 📦 Test data migration')
+      console.log('  trackDeniDev.testStoragePerformance() - ⚡ Test storage performance')
+      console.log('  trackDeniDev.debugStorage() - 🐛 Debug storage system issues')
     }
   }, [])
 

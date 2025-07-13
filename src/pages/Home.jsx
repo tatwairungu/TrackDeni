@@ -6,6 +6,7 @@ import UpgradePrompt from '../components/UpgradePrompt'
 import ProWelcomeModal from '../components/ProWelcomeModal'
 import PerformanceWarning from '../components/PerformanceWarning'
 import LiteModeIndicator from '../components/LiteModeIndicator'
+import StorageIndicator from '../components/StorageIndicator'
 
 const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
   const { 
@@ -73,7 +74,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
     setFilter(newFilter)
     resetPagination()
   }
-
+  
   // Get filter counts
   const getFilterCounts = () => {
     const counts = {
@@ -152,36 +153,28 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
     )
     
     if (confirmed) {
-      // Clear data from store
       clearAllData()
-      
-      // Also clear localStorage directly to ensure complete cleanup
-      localStorage.removeItem('trackdeni-storage')
-      
       alert('All data has been cleared successfully.')
-      
-      // Handle tutorial progression
-      tutorial?.onTutorialCompleteClicked()
-      
-      // Refresh the page to ensure clean state
-      window.location.reload()
     }
   }
 
   const handleAddDebt = () => {
-    if (canAddCustomer()) {
-      onNavigateToAddDebt()
-    } else {
+    // Check if user can add customers (free tier limit)
+    if (!canAddCustomer()) {
+      // Show upgrade prompt instead of navigating
       showUpgradeModal()
+      return
     }
+    
+    onNavigateToAddDebt()
   }
 
   const headerActions = [
     {
-      label: 'Add Debt',
+      label: 'Add Customer',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
       ),
       variant: 'primary',
@@ -191,7 +184,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
 
   return (
     <div className="min-h-screen bg-bg">
-            <Header
+      <Header
         title="TrackDeni"
         actions={headerActions}
         onSettings={handleSettings}
@@ -208,6 +201,9 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
         
         {/* Lite Mode Indicator */}
         <LiteModeIndicator />
+
+        {/* Storage Indicator (Development Only) */}
+        <StorageIndicator />
         
         {/* Summary Stats */}
         <div className="card">

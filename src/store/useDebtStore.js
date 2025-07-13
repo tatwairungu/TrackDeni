@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
+import storage from '../utils/storage'
 
 // Free tier constants
 const FREE_TIER_LIMIT = 5
@@ -683,8 +684,38 @@ const useDebtStore = create(
       resetPagination: () => set({ currentPage: 1 }),
     }),
     {
-      name: 'trackdeni-storage', // localStorage key
+      name: 'trackdeni-storage',
       version: 1,
+      storage: createJSONStorage(() => ({
+        getItem: async (name) => {
+          try {
+            const data = await storage.getData()
+            return data ? JSON.stringify(data) : null
+          } catch (error) {
+            console.warn('⚠️ Storage read failed:', error)
+            return null
+          }
+        },
+        setItem: async (name, value) => {
+          try {
+            const data = JSON.parse(value)
+            await storage.setData(data)
+          } catch (error) {
+            console.warn('⚠️ Storage write failed:', error)
+            throw error
+          }
+        },
+        removeItem: async (name) => {
+          try {
+            await storage.clearData()
+          } catch (error) {
+            console.warn('⚠️ Storage clear failed:', error)
+            throw error
+          }
+        }
+      })),
+      // Handle hydration for async storage
+      skipHydration: false,
     }
   )
 )
