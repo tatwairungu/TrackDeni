@@ -82,13 +82,12 @@ function App() {
         
         // Show current state
         showState: () => {
-          const state = store.getState()
           console.log('📊 Current state:', {
-            customers: state.customers.length,
-            userTier: state.userTier,
-            canAddMore: state.canAddCustomer(),
-            dismissedCustomerCounts: state.dismissedCustomerCounts,
-            showSignupEncouragement: state.showSignupEncouragement
+            customers: store.customers.length,
+            userTier: store.userTier,
+            canAddMore: store.canAddCustomer(),
+            dismissedCustomerCounts: store.dismissedCustomerCounts,
+            showSignupEncouragement: store.showSignupEncouragement
           })
         },
         
@@ -580,6 +579,48 @@ function App() {
           console.log('   • Auto Lite Mode enablement')
           console.log('   • Lite Mode indicator')
           console.log('   • Performance optimizations')
+        },
+
+        // Pagination Testing
+        addPaginationTestData: async (count = 30) => {
+          const { addTestCustomersToStore } = await import('./utils/testData.js')
+          const addedCount = await addTestCustomersToStore(count)
+          console.log(`📄 Attempted to add ${count} test customers, successfully added ${addedCount}`)
+          console.log('💡 Check customer list to see pagination controls')
+        },
+        
+        testPagination: async () => {
+          console.log('📄 Testing pagination...')
+          
+          // Clear existing customers to start fresh
+          store.clearAllData()
+          
+          // Add enough customers to trigger pagination
+          await window.trackDeniDev.addPaginationTestData(50)
+          
+          console.log('✅ Pagination test setup complete')
+          console.log('💡 You should see:')
+          console.log('   • 25 customers per page (normal mode)')
+          console.log('   • 15 customers per page (Lite Mode)')
+          console.log('   • Previous/Next buttons')
+          console.log('   • Page indicator')
+        },
+
+        testLiteModeWithPagination: async () => {
+          console.log('📄 Testing Lite Mode with pagination...')
+          
+          // Enable Lite Mode
+          await window.trackDeniDev.forceLiteMode()
+          
+          // Add test data
+          await window.trackDeniDev.addPaginationTestData(40)
+          
+          console.log('✅ Lite Mode pagination test setup complete')
+          console.log('💡 You should see:')
+          console.log('   • Lite Mode indicator active')
+          console.log('   • 15 customers per page (smaller page size)')
+          console.log('   • Pagination controls')
+          console.log('💡 Refresh page to see changes')
         }
       }
       
@@ -606,6 +647,9 @@ function App() {
       console.log('  trackDeniDev.disableLiteMode() - 💡 Force Lite Mode off')
       console.log('  trackDeniDev.resetLiteMode() - 🔄 Reset Lite Mode preference')
       console.log('  trackDeniDev.testLiteModeFlow() - 🧪 Test complete Lite Mode flow')
+      console.log('  trackDeniDev.addPaginationTestData(30) - 📄 Add test customers for pagination')
+      console.log('  trackDeniDev.testPagination() - 📄 Test pagination with 50 customers')
+      console.log('  trackDeniDev.testLiteModeWithPagination() - 📄 Test Lite Mode pagination')
     }
   }, [])
 

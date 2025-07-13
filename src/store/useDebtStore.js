@@ -15,6 +15,9 @@ const useDebtStore = create(
       isLoading: false,
       error: null,
       
+      // Pagination state
+      currentPage: 1,
+      
       // Free tier state
       userTier: 'free', // 'free' or 'pro'
       showUpgradePrompt: false,
@@ -608,7 +611,7 @@ const useDebtStore = create(
         showProWelcome: false,
         error: null 
       }),
-      clearAllData: () => set({ customers: [], error: null, userTier: 'free', showUpgradePrompt: false, showProWelcome: false }),
+      clearAllData: () => set({ customers: [], error: null, userTier: 'free', showUpgradePrompt: false, showProWelcome: false, currentPage: 1 }),
 
       // Load customers from cloud sync
       loadCustomers: (customers) => {
@@ -619,6 +622,65 @@ const useDebtStore = create(
           isLoading: false 
         })
       },
+
+      // Pagination actions
+      setCurrentPage: (page) => set({ currentPage: page }),
+      
+      // Get items per page based on Lite Mode
+      getItemsPerPage: () => {
+        // Check if Lite Mode is enabled
+        try {
+          const liteModeState = localStorage.getItem('trackdeni-lite-mode')
+          if (liteModeState) {
+            const parsed = JSON.parse(liteModeState)
+            if (parsed.enabled) {
+              return 15 // Lite Mode: smaller page size
+            }
+          }
+        } catch (e) {
+          // If localStorage fails, use default
+        }
+        return 25 // Normal mode: standard page size
+      },
+
+      // Get paginated customers
+      getPaginatedCustomers: (allCustomers) => {
+        const state = get()
+        const itemsPerPage = state.getItemsPerPage()
+        const startIndex = (state.currentPage - 1) * itemsPerPage
+        const endIndex = startIndex + itemsPerPage
+        
+        return {
+          customers: allCustomers.slice(startIndex, endIndex),
+          totalPages: Math.ceil(allCustomers.length / itemsPerPage),
+          currentPage: state.currentPage,
+          totalCustomers: allCustomers.length,
+          hasNextPage: endIndex < allCustomers.length,
+          hasPrevPage: state.currentPage > 1,
+          itemsPerPage
+        }
+      },
+
+      // Navigation actions
+      goToNextPage: () => {
+        const state = get()
+        const itemsPerPage = state.getItemsPerPage()
+        const totalPages = Math.ceil(state.customers.length / itemsPerPage)
+        
+        if (state.currentPage < totalPages) {
+          set({ currentPage: state.currentPage + 1 })
+        }
+      },
+
+      goToPrevPage: () => {
+        const state = get()
+        if (state.currentPage > 1) {
+          set({ currentPage: state.currentPage - 1 })
+        }
+      },
+
+      // Reset pagination when filter changes
+      resetPagination: () => set({ currentPage: 1 }),
     }),
     {
       name: 'trackdeni-storage', // localStorage key

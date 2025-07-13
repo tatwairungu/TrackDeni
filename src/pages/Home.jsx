@@ -21,7 +21,13 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
     hideUpgradePrompt,
     showUpgradeModal,
     showProWelcome,
-    hideProWelcomeModal
+    hideProWelcomeModal,
+    // Pagination
+    currentPage,
+    getPaginatedCustomers,
+    goToNextPage,
+    goToPrevPage,
+    resetPagination
   } = useDebtStore()
   const [filter, setFilter] = useState('all') // all, overdue, due-soon, paid
 
@@ -56,6 +62,17 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
       })
     })
   }, [customers, filter])
+
+  // Get paginated customers
+  const paginationData = useMemo(() => {
+    return getPaginatedCustomers(filteredCustomers)
+  }, [filteredCustomers, currentPage, getPaginatedCustomers])
+
+  // Handle filter change with pagination reset
+  const handleFilterChange = (newFilter) => {
+    setFilter(newFilter)
+    resetPagination()
+  }
 
   // Get filter counts
   const getFilterCounts = () => {
@@ -297,7 +314,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
             ].map(({ key, label, count }) => (
               <button
                 key={key}
-                onClick={() => setFilter(key)}
+                onClick={() => handleFilterChange(key)}
                 className={`py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                   filter === key
                     ? 'bg-primary text-white'
@@ -327,11 +344,16 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
                'Paid Up Customers'}
             </h3>
             <span className="text-sm text-gray-500">
-              {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
+              {paginationData.totalCustomers} customer{paginationData.totalCustomers !== 1 ? 's' : ''}
+              {paginationData.totalPages > 1 && (
+                <span className="ml-2 text-xs">
+                  (Page {paginationData.currentPage} of {paginationData.totalPages})
+                </span>
+              )}
             </span>
           </div>
 
-          {filteredCustomers.length === 0 ? (
+          {paginationData.totalCustomers === 0 ? (
             <div className="card text-center py-8">
               {customers.length === 0 ? (
                 <>
@@ -370,16 +392,54 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredCustomers.map(customer => (
-                <CustomerCard
-                  key={customer.id}
-                  customer={customer}
-                  onClick={onNavigateToCustomer}
-                  tutorial={tutorial}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                {paginationData.customers.map(customer => (
+                  <CustomerCard
+                    key={customer.id}
+                    customer={customer}
+                    onClick={onNavigateToCustomer}
+                    tutorial={tutorial}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {paginationData.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={goToPrevPage}
+                      disabled={!paginationData.hasPrevPage}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        paginationData.hasPrevPage
+                          ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      ← Previous
+                    </button>
+                    <button
+                      onClick={goToNextPage}
+                      disabled={!paginationData.hasNextPage}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        paginationData.hasNextPage
+                          ? 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600">
+                    Showing {((paginationData.currentPage - 1) * paginationData.itemsPerPage) + 1} to {' '}
+                    {Math.min(paginationData.currentPage * paginationData.itemsPerPage, paginationData.totalCustomers)} of {' '}
+                    {paginationData.totalCustomers} customers
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
