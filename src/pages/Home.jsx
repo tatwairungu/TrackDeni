@@ -4,6 +4,7 @@ import CustomerCard from '../components/CustomerCard'
 import Header from '../components/Header'
 import UpgradePrompt from '../components/UpgradePrompt'
 import ProWelcomeModal from '../components/ProWelcomeModal'
+import PerformanceWarning from '../components/PerformanceWarning'
 
 const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
   const { 
@@ -184,6 +185,9 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
       />
       
       <div className="max-w-md lg:max-w-4xl xl:max-w-6xl mx-auto p-4 space-y-6">
+        {/* Performance Warnings */}
+        <PerformanceWarning />
+        
         {/* Summary Stats */}
         <div className="card">
           <div className="flex items-center justify-between mb-4">

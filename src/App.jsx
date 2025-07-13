@@ -462,6 +462,56 @@ function App() {
            } catch (error) {
              console.error('❌ Pro tier caps test failed:', error)
            }
+        },
+
+        // Device Detection Testing
+        testDeviceDetection: async () => {
+          const { logDeviceProfile } = await import('./utils/deviceDetection.js')
+          logDeviceProfile()
+        },
+        
+        // Simulate low-end device
+        simulateLowEndDevice: () => {
+          console.log('🔧 Simulating low-end device...')
+          
+          // Override device detection functions for testing
+          Object.defineProperty(navigator, 'deviceMemory', {
+            value: 1, // 1GB RAM
+            writable: true
+          })
+          
+          Object.defineProperty(navigator, 'hardwareConcurrency', {
+            value: 2, // 2 CPU cores
+            writable: true
+          })
+          
+          // Mock slow network
+          if (navigator.connection) {
+            Object.defineProperty(navigator.connection, 'effectiveType', {
+              value: '2g',
+              writable: true
+            })
+          }
+          
+          console.log('✅ Low-end device simulation active')
+          console.log('💡 Refresh page to see performance warnings')
+        },
+        
+        // Reset device simulation
+        resetDeviceSimulation: () => {
+          console.log('🔄 Resetting device simulation...')
+          // Note: This requires a page refresh to fully reset
+          localStorage.removeItem('trackdeni-dismissed-warnings')
+          console.log('✅ Device simulation reset')
+          console.log('💡 Refresh page to see normal device detection')
+        },
+        
+        // Test performance warnings
+        testPerformanceWarnings: () => {
+          console.log('⚠️ Testing performance warnings...')
+          localStorage.removeItem('trackdeni-dismissed-warnings')
+          console.log('✅ Performance warnings reset')
+          console.log('💡 Refresh page to see warnings again')
         }
       }
       
@@ -478,7 +528,10 @@ function App() {
       console.log('  trackDeniDev.debugUserDocument() - 🔍 Debug user document for security rules')
       console.log('  trackDeniDev.testRateLimit() - ⏱️ Test rate limiting (rapid requests)')
       console.log('  trackDeniDev.testDocumentSizeLimits() - 📏 Test document size limits')
-      console.log('  trackDeniDev.testProTierCaps() - 🎯 Test Pro tier caps (10K customers, 50K debts)')
+      console.log('  trackDeniDev.testDeviceDetection() - 📱 Test device detection and logging')
+      console.log('  trackDeniDev.simulateLowEndDevice() - 🔧 Simulate low-end device')
+      console.log('  trackDeniDev.resetDeviceSimulation() - 🔄 Reset device simulation')
+      console.log('  trackDeniDev.testPerformanceWarnings() - ⚠️ Test performance warnings')
     }
   }, [])
 
