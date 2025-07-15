@@ -320,15 +320,11 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
             step="0.01"
             value={formData.amount}
             onChange={handleInputChange('amount')}
-            onWheel={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
+            onWheel={(e) => e.currentTarget.blur()}
             onKeyDown={(e) => {
               // Prevent arrow keys from changing the value
               if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.preventDefault()
-                e.stopPropagation()
               }
             }}
             style={{

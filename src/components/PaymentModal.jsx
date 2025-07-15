@@ -243,15 +243,11 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
                 step="0.01"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                onWheel={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                }}
+                onWheel={(e) => e.currentTarget.blur()}
                 onKeyDown={(e) => {
                   // Prevent arrow keys from changing the value
                   if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                     e.preventDefault()
-                    e.stopPropagation()
                   }
                 }}
                 style={{
