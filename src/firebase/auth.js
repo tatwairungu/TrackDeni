@@ -292,10 +292,25 @@ export const getUserDocument = async (userId) => {
 // Sign out
 export const signOutUser = async () => {
   try {
+    // Clear user data from store BEFORE signing out
+    const { default: useDebtStore } = await import('../store/useDebtStore.js')
+    const { clearUserData } = useDebtStore.getState()
+    clearUserData()
+    
+    // Sign out from Firebase
     await signOut(auth)
     
-    // Clear local store data to prevent data from remaining on screen
+    // Clear local storage to prevent data from remaining
     localStorage.removeItem('trackdeni-storage')
+    localStorage.removeItem('trackdeni-backup')
+    
+    // Also clear IndexedDB data
+    try {
+      const { default: storage } = await import('../utils/storage.js')
+      await storage.clearData()
+    } catch (error) {
+      console.warn('⚠️ Could not clear IndexedDB data:', error)
+    }
     
     // Force page reload to ensure clean state
     window.location.reload()

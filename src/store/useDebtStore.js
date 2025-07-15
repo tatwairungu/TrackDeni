@@ -631,6 +631,36 @@ const useDebtStore = create(
       clearError: () => set({ error: null }),
       setLoading: (loading) => set({ isLoading: loading }),
 
+      // Clear all user data (for logout)
+      clearUserData: () => {
+        set({
+          // Core data
+          customers: [],
+          
+          // UI state
+          isLoading: false,
+          error: null,
+          
+          // Pagination state
+          currentPage: 1,
+          
+          // Free tier state - reset to free tier
+          userTier: 'free',
+          showUpgradePrompt: false,
+          showProWelcome: false,
+          
+          // Signup encouragement state - reset
+          showSignupEncouragement: false,
+          dismissedCustomerCounts: [],
+          lastSignupPromptCustomerCount: 0,
+          
+          // Real-time sync state - reset
+          realtimeSyncListeners: null,
+          isRealtimeSyncEnabled: false
+        })
+        console.log('🗑️ All user data cleared from store')
+      },
+
       // Development helpers
       resetToFreeTier: () => set({ 
         userTier: 'free',

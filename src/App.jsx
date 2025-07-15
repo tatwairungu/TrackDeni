@@ -799,45 +799,81 @@ function App() {
         }
       }
       
-      console.log('🛠️ TrackDeni Dev Tools Available:')
-      console.log('  trackDeniDev.showUpgrade() - Show upgrade prompt')
-      console.log('  trackDeniDev.addTestCustomers(5) - Add test customers')
-      console.log('  trackDeniDev.testUpgradeFlow() - Complete test scenario')
-      console.log('  trackDeniDev.upgradeToPro() - Direct upgrade')
-      console.log('  trackDeniDev.resetToFree() - Reset for testing')
-      console.log('  trackDeniDev.showState() - Show current state')
-      console.log('  trackDeniDev.resetSignupEncouragement() - Reset signup modals for testing')
-      console.log('  trackDeniDev.testSignupFlow() - Fresh start for testing signup flow')
-      console.log('  trackDeniDev.bypassFrontendAndAddCustomer() - 🔓 Test security rules (malicious user simulation)')
-      console.log('  trackDeniDev.debugUserDocument() - 🔍 Debug user document for security rules')
-      console.log('  trackDeniDev.testRateLimit() - ⏱️ Test rate limiting (rapid requests)')
-      console.log('  trackDeniDev.testDocumentSizeLimits() - 📏 Test document size limits')
-      console.log('  trackDeniDev.testDeviceDetection() - 📱 Test device detection and logging')
-      console.log('  trackDeniDev.simulateLowEndDevice() - 🔧 Simulate low-end device')
-      console.log('  trackDeniDev.resetDeviceSimulation() - 🔄 Reset device simulation')
-      console.log('  trackDeniDev.testPerformanceWarnings() - ⚠️ Test performance warnings')
-      console.log('  trackDeniDev.testLiteMode() - 📊 Test Lite Mode status')
-      console.log('  trackDeniDev.simulateLiteModeDevice() - 🔧 Simulate Lite Mode device')
-      console.log('  trackDeniDev.forceLiteMode() - 💡 Force Lite Mode on')
-      console.log('  trackDeniDev.disableLiteMode() - 💡 Force Lite Mode off')
-      console.log('  trackDeniDev.resetLiteMode() - 🔄 Reset Lite Mode preference')
-      console.log('  trackDeniDev.testLiteModeFlow() - 🧪 Test complete Lite Mode flow')
-      console.log('  trackDeniDev.addPaginationTestData(30) - 📄 Add test customers for pagination')
-      console.log('  trackDeniDev.testPagination() - 📄 Test pagination with 50 customers')
-      console.log('  trackDeniDev.testLiteModeWithPagination() - 📄 Test Lite Mode pagination')
-      console.log('  trackDeniDev.testStorageSystem() - 🗄️ Test IndexedDB storage system')
-      console.log('  trackDeniDev.showStorageInfo() - 🗄️ Show storage system information')
-      console.log('  trackDeniDev.migrateToIndexedDB() - 📦 Test data migration')
-      console.log('  trackDeniDev.testStoragePerformance() - ⚡ Test storage performance')
-      console.log('  trackDeniDev.debugStorage() - 🐛 Debug storage system issues')
-      console.log('  trackDeniDev.testPerformanceOptimizations() - 🚀 Test performance optimizations')
-      console.log('  trackDeniDev.toggleAnimations("none"|"reduced"|"full"|"auto") - 🎭 Test animation settings')
-      console.log('  trackDeniDev.toggleVisualComplexity("simple"|"standard"|"rich"|"auto") - 🎨 Test visual settings')
-      console.log('  trackDeniDev.testAnimationSettings() - 🎭 Test all animation settings')
-      console.log('  trackDeniDev.debugLocalData() - 📊 Debug local data')
-      console.log('  trackDeniDev.debugRealtimeSync() - 🔄 Test real-time sync status')
-      console.log('  trackDeniDev.debugMigration() - 🔄 Enhanced debug migration')
-    }
+      // Add debug function to test logout data clearing
+      window.trackDeniDev.testLogoutClear = async () => {
+        try {
+          console.log('🧪 Testing logout data clearing...')
+          
+          // Show current state before clear
+          const { customers, userTier, isRealtimeSyncEnabled, showUpgradePrompt } = useDebtStore.getState()
+          console.log('📊 Before clear:', {
+            customers: customers.length,
+            userTier,
+            isRealtimeSyncEnabled,
+            showUpgradePrompt
+          })
+          
+          // Clear user data
+          const { clearUserData } = useDebtStore.getState()
+          clearUserData()
+          
+          // Show state after clear
+          const newState = useDebtStore.getState()
+          console.log('📊 After clear:', {
+            customers: newState.customers.length,
+            userTier: newState.userTier,
+            isRealtimeSyncEnabled: newState.isRealtimeSyncEnabled,
+            showUpgradePrompt: newState.showUpgradePrompt
+          })
+          
+          console.log('✅ Logout data clear test completed')
+          return newState
+        } catch (error) {
+          console.error('❌ Error testing logout clear:', error)
+          return null
+        }
+      }
+        
+        console.log('🛠️ TrackDeni Dev Tools Available:')
+        console.log('  trackDeniDev.showUpgrade() - Show upgrade prompt')
+        console.log('  trackDeniDev.addTestCustomers(5) - Add test customers')
+        console.log('  trackDeniDev.testUpgradeFlow() - Complete test scenario')
+        console.log('  trackDeniDev.upgradeToPro() - Direct upgrade')
+        console.log('  trackDeniDev.resetToFree() - Reset for testing')
+        console.log('  trackDeniDev.showState() - Show current state')
+        console.log('  trackDeniDev.resetSignupEncouragement() - Reset signup modals for testing')
+        console.log('  trackDeniDev.testSignupFlow() - Fresh start for testing signup flow')
+        console.log('  trackDeniDev.bypassFrontendAndAddCustomer() - 🔓 Test security rules (malicious user simulation)')
+        console.log('  trackDeniDev.debugUserDocument() - 🔍 Debug user document for security rules')
+        console.log('  trackDeniDev.testRateLimit() - ⏱️ Test rate limiting (rapid requests)')
+        console.log('  trackDeniDev.testDocumentSizeLimits() - 📏 Test document size limits')
+        console.log('  trackDeniDev.testDeviceDetection() - 📱 Test device detection and logging')
+        console.log('  trackDeniDev.simulateLowEndDevice() - 🔧 Simulate low-end device')
+        console.log('  trackDeniDev.resetDeviceSimulation() - 🔄 Reset device simulation')
+        console.log('  trackDeniDev.testPerformanceWarnings() - ⚠️ Test performance warnings')
+        console.log('  trackDeniDev.testLiteMode() - 📊 Test Lite Mode status')
+        console.log('  trackDeniDev.simulateLiteModeDevice() - 🔧 Simulate Lite Mode device')
+        console.log('  trackDeniDev.forceLiteMode() - 💡 Force Lite Mode on')
+        console.log('  trackDeniDev.disableLiteMode() - 💡 Force Lite Mode off')
+        console.log('  trackDeniDev.resetLiteMode() - 🔄 Reset Lite Mode preference')
+        console.log('  trackDeniDev.testLiteModeFlow() - 🧪 Test complete Lite Mode flow')
+        console.log('  trackDeniDev.addPaginationTestData(30) - 📄 Add test customers for pagination')
+        console.log('  trackDeniDev.testPagination() - 📄 Test pagination with 50 customers')
+        console.log('  trackDeniDev.testLiteModeWithPagination() - 📄 Test Lite Mode pagination')
+        console.log('  trackDeniDev.testStorageSystem() - 🗄️ Test IndexedDB storage system')
+        console.log('  trackDeniDev.showStorageInfo() - 🗄️ Show storage system information')
+        console.log('  trackDeniDev.migrateToIndexedDB() - 📦 Test data migration')
+        console.log('  trackDeniDev.testStoragePerformance() - ⚡ Test storage performance')
+        console.log('  trackDeniDev.debugStorage() - 🐛 Debug storage system issues')
+        console.log('  trackDeniDev.testPerformanceOptimizations() - 🚀 Test performance optimizations')
+        console.log('  trackDeniDev.toggleAnimations("none"|"reduced"|"full"|"auto") - 🎭 Test animation settings')
+        console.log('  trackDeniDev.toggleVisualComplexity("simple"|"standard"|"rich"|"auto") - 🎨 Test visual settings')
+        console.log('  trackDeniDev.testAnimationSettings() - 🎭 Test all animation settings')
+        console.log('  trackDeniDev.debugLocalData() - 📊 Debug local data')
+        console.log('  trackDeniDev.debugRealtimeSync() - 🔄 Test real-time sync status')
+        console.log('  trackDeniDev.debugMigration() - 🔄 Enhanced debug migration')
+        console.log('  trackDeniDev.testLogoutClear() - 🧪 Test logout data clearing')
+      }
   }, [])
 
   const navigateToHome = () => {

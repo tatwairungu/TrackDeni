@@ -83,9 +83,14 @@ const AuthGuard = ({ children, requireAuth = false }) => {
           // For new users, real-time sync will be enabled after migration in auth functions
           
         } else {
-          // Disable real-time sync when user logs out
-          const { disableRealtimeSync } = useDebtStore.getState()
+          // User logged out - clear all user data
+          const { disableRealtimeSync, clearUserData } = useDebtStore.getState()
+          
+          // Disable real-time sync
           disableRealtimeSync()
+          
+          // Clear all user data from store
+          clearUserData()
           
           setUser(null)
         }

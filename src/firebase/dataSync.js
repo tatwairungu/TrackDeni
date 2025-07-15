@@ -528,12 +528,12 @@ const clearStoreData = async () => {
   // Clear localStorage
   localStorage.removeItem('trackdeni-storage')
   
-  // Update Zustand store to empty state
+  // Update Zustand store to empty state using the comprehensive clearUserData function
   const { default: useDebtStore } = await import('../store/useDebtStore.js')
-  const store = useDebtStore.getState()
+  const { clearUserData } = useDebtStore.getState()
   
-  // Clear the store
-  store.loadCustomers([])
+  // Clear all user data
+  clearUserData()
   
   console.log('🗑️ Store data cleared for fresh start')
 }
