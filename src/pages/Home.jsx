@@ -166,7 +166,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
       return
     }
     
-    onNavigateToAddDebt()
+    onNavigateToAddDebt(null, true)
   }
 
   const headerActions = [
@@ -361,7 +361,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
                   <h4 className="font-medium text-gray-900 mb-2">No customers yet</h4>
                   <p className="text-gray-600 mb-4">Start by adding your first customer and their debt.</p>
                   <button
-                    onClick={() => onNavigateToAddDebt()}
+                    onClick={() => onNavigateToAddDebt(null, true)}
                     className="btn-primary"
                   >
                     Add First Customer

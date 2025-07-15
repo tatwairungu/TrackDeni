@@ -133,7 +133,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
         </svg>
       ),
       variant: 'primary',
-      onClick: () => onNavigateToAddDebt(customerId)
+      onClick: () => onNavigateToAddDebt(customerId, false)
     }
   ]
 
@@ -343,7 +343,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
             <h4 className="font-medium text-gray-900 mb-2">No debts recorded</h4>
             <p className="text-gray-600 mb-4">This customer hasn't borrowed anything yet.</p>
             <button
-              onClick={() => onNavigateToAddDebt(customerId)}
+              onClick={() => onNavigateToAddDebt(customerId, false)}
               className="btn-primary"
             >
               Add First Debt

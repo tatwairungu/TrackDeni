@@ -22,6 +22,7 @@ import { initializePerformanceOptimizations } from './utils/performanceOptimizat
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
   const [selectedCustomerId, setSelectedCustomerId] = useState(null)
+  const [isNewCustomerFlow, setIsNewCustomerFlow] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
   
@@ -717,10 +718,12 @@ function App() {
   const navigateToHome = () => {
     setCurrentPage('home')
     setSelectedCustomerId(null)
+    setIsNewCustomerFlow(false)
   }
 
-  const navigateToAddDebt = (customerId = null) => {
+  const navigateToAddDebt = (customerId = null, isNewCustomer = false) => {
     setSelectedCustomerId(customerId)
+    setIsNewCustomerFlow(isNewCustomer)
     setCurrentPage('add-debt')
     // Handle tutorial progression
     if (tutorial.isActive && tutorial.currentStep?.id === 'click-add-debt') {
@@ -730,7 +733,7 @@ function App() {
 
   const navigateToCustomer = (customer, action = 'view') => {
     if (action === 'add-debt') {
-      navigateToAddDebt(customer.id)
+      navigateToAddDebt(customer.id, false)
     } else {
       setSelectedCustomerId(customer.id)
       setCurrentPage('customer-detail')
@@ -738,11 +741,13 @@ function App() {
   }
 
   const handleDebtSuccess = (customerId) => {
-    // Navigate to customer detail or home based on context
-    if (customerId) {
+    // Navigate based on the flow type
+    if (customerId && !isNewCustomerFlow) {
+      // Existing customer + debt → go to customer detail page
       setSelectedCustomerId(customerId)
       setCurrentPage('customer-detail')
     } else {
+      // New customer + debt OR no customer → go to home page
       navigateToHome()
     }
   }
