@@ -167,7 +167,11 @@ const migrationUtils = {
       const backup = localStorage.getItem('trackdeni-backup')
       if (backup) {
         const parsedBackup = JSON.parse(backup)
-        localStorage.setItem('trackdeni-storage', JSON.stringify(parsedBackup.data))
+        // Save data in the correct format with state wrapper
+        localStorage.setItem('trackdeni-storage', JSON.stringify({
+          state: parsedBackup.data,
+          version: 1
+        }))
         console.log('🔄 Data rolled back from backup successfully')
         return true
       } else {
@@ -321,8 +325,8 @@ const migrateLocalDataToFirestore = async (userId) => {
   try {
     console.log('🔄 Starting local data migration for user:', userId)
     
-    // Get local data from localStorage
-    const localData = getLocalData()
+    // Get local data from storage system
+    const localData = await getLocalData()
     if (!localData || !localData.customers || localData.customers.length === 0) {
       console.log('📭 No local data to migrate')
       return { success: true, migratedCustomers: 0, migratedDebts: 0 }
@@ -332,7 +336,7 @@ const migrateLocalDataToFirestore = async (userId) => {
     const result = await migrationUtils.migrateToFirestore(localData, userId)
     
     // Clear local data after successful migration
-    clearLocalData()
+    await clearLocalData()
     
     return { 
       success: true, 
@@ -351,13 +355,64 @@ const migrateLocalDataToFirestore = async (userId) => {
   }
 }
 
+// Manual migration function for users whose data wasn't migrated during account creation
+const manualMigrateLocalDataToFirestore = async (userId) => {
+  try {
+    console.log('🔄 Starting manual local data migration for user:', userId)
+    
+    // Get local data from storage system
+    const localData = await getLocalData()
+    if (!localData || !localData.customers || localData.customers.length === 0) {
+      console.log('📭 No local data to migrate')
+      return { success: true, migratedCustomers: 0, migratedDebts: 0, message: 'No local data found to migrate' }
+    }
+    
+    // Check if user already has data in Firestore
+    const customersRef = collection(db, 'users', userId, 'customers')
+    const existingCustomers = await getDocs(customersRef)
+    
+    if (existingCustomers.size > 0) {
+      console.log('⚠️ User already has cloud data, skipping migration to avoid duplicates')
+      return { 
+        success: false, 
+        migratedCustomers: 0, 
+        migratedDebts: 0,
+        message: 'User already has cloud data. Migration skipped to avoid duplicates.'
+      }
+    }
+    
+    // Use the enhanced migration utilities
+    const result = await migrationUtils.migrateToFirestore(localData, userId)
+    
+    // Don't clear local data in manual migration - let user verify first
+    console.log('✅ Manual migration completed, local data preserved for verification')
+    
+    return { 
+      success: true, 
+      migratedCustomers: result.migratedCustomers, 
+      migratedDebts: result.migratedDebts,
+      message: `Successfully migrated ${result.migratedCustomers} customers and ${result.migratedDebts} debts. Local data preserved for verification.`
+    }
+    
+  } catch (error) {
+    console.error('❌ Error in manual migration:', error)
+    return { 
+      success: false, 
+      error: error.message,
+      migratedCustomers: 0,
+      migratedDebts: 0,
+      message: `Manual migration failed: ${error.message}`
+    }
+  }
+}
+
 // Sync Firestore data to local store (when user signs in)
 const syncFirestoreToLocal = async (userId) => {
   try {
     console.log('🔄 Syncing Firestore data to local for user:', userId)
     
     // Get current local data before sync
-    const existingLocalData = getLocalData()
+    const existingLocalData = await getLocalData()
     const hasLocalData = existingLocalData && existingLocalData.customers && existingLocalData.customers.length > 0
     
     // Get customers from Firestore
@@ -484,28 +539,55 @@ const clearStoreData = async () => {
 }
 
 // Helper functions
-const getLocalData = () => {
+const getLocalData = async () => {
   try {
+    // Use the same storage system as the app
+    const { default: storage } = await import('../utils/storage.js')
+    
+    // getData() automatically ensures storage is ready
+    const data = await storage.getData()
+    
+    if (data) {
+      // The storage system returns data wrapped in state
+      const actualData = data.state || data
+      console.log('📊 Found local data:', { customers: actualData.customers?.length || 0 })
+      return actualData
+    }
+    
+    // Fallback to old localStorage format if needed
     const stored = localStorage.getItem('trackdeni-storage')
     if (stored) {
       const parsed = JSON.parse(stored)
-      return parsed.state
+      const actualData = parsed.state || parsed
+      console.log('📊 Found fallback localStorage data:', { customers: actualData.customers?.length || 0 })
+      return actualData
     }
+    
+    console.log('📊 No local data found')
     return null
   } catch (error) {
-    console.error('Error reading local data:', error)
+    console.error('❌ Error reading local data:', error)
     return null
   }
 }
 
-const clearLocalData = () => {
+const clearLocalData = async () => {
   try {
+    // Use the same storage system as the app for cleanup
+    const { default: storage } = await import('../utils/storage.js')
+    
+    // clearData() automatically ensures storage is ready
+    await storage.clearData()
+    
+    // Also clear old localStorage for safety
     localStorage.removeItem('trackdeni-storage')
+    localStorage.removeItem('trackdeni-backup')
+    
     console.log('🗑️ Local data cleared after migration')
   } catch (error) {
-    console.error('Error clearing local data:', error)
+    console.error('❌ Error clearing local data:', error)
   }
 }
 
 // Export utility functions and migration utils for testing
-export { migrateLocalDataToFirestore, syncFirestoreToLocal, getLocalData, clearLocalData, migrationUtils } 
+export { migrateLocalDataToFirestore, manualMigrateLocalDataToFirestore, syncFirestoreToLocal, getLocalData, clearLocalData, migrationUtils } 

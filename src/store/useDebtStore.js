@@ -517,7 +517,29 @@ const useDebtStore = create(
         return Math.max(0, FREE_TIER_LIMIT - state.customers.length)
       },
 
+      // Helper function to check if user is authenticated
+      isUserAuthenticated: async () => {
+        try {
+          const { auth } = await import('../firebase/config.js')
+          return !!auth.currentUser
+        } catch (error) {
+          console.error('Error checking auth status:', error)
+          return false
+        }
+      },
+
       upgradeToProTier: async () => {
+        // Check if user is authenticated first
+        const { auth } = await import('../firebase/config.js')
+        
+        if (!auth.currentUser) {
+          set({ 
+            error: 'Please create an account first to upgrade to Pro. This ensures your subscription is properly managed and your data is backed up.',
+            showUpgradePrompt: false 
+          })
+          return { success: false, requiresAuth: true }
+        }
+        
         // Update local state first
         set({ 
           userTier: 'pro',
@@ -526,47 +548,51 @@ const useDebtStore = create(
           error: null 
         })
         
-        // If user is authenticated, sync to Firestore
+        // Sync to Firestore (user is authenticated)
         try {
-          const { auth } = await import('../firebase/config.js')
+          const { db } = await import('../firebase/config.js')
+          const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
           
-          if (auth.currentUser) {
-            const { db } = await import('../firebase/config.js')
-            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
-            
-            const userId = auth.currentUser.uid
-            
-            // Update user document in Firestore
-            const userRef = doc(db, 'users', userId)
-            
-            // Get current rate limit data to increment properly
-            const { getDoc } = await import('firebase/firestore')
-            const userDoc = await getDoc(userRef)
-            const userData = userDoc.data()
-            const rateLimits = userData.rateLimits || {}
-            const userUpdateData = rateLimits.user_update || {}
-            
-            // Calculate new count (increment or reset if >1 minute passed)
-            const now = new Date()
-            const lastReset = userUpdateData.lastReset?.toDate ? userUpdateData.lastReset.toDate() : new Date(0)
-            const minutesSinceReset = (now - lastReset) / 60000
-            
-            const newCount = minutesSinceReset >= 1.0 ? 1 : (userUpdateData.count || 0) + 1
-            
-            await updateDoc(userRef, {
-              isPro: true,
-              upgradedAt: serverTimestamp(),
-              'rateLimits.user_update': {
-                lastReset: minutesSinceReset >= 1.0 ? serverTimestamp() : userUpdateData.lastReset,
-                count: newCount
-              }
-            })
-            
-            console.log('✅ Pro upgrade synced to Firestore successfully')
-          }
+          const userId = auth.currentUser.uid
+          
+          // Update user document in Firestore
+          const userRef = doc(db, 'users', userId)
+          
+          // Get current rate limit data to increment properly
+          const { getDoc } = await import('firebase/firestore')
+          const userDoc = await getDoc(userRef)
+          const userData = userDoc.data()
+          const rateLimits = userData.rateLimits || {}
+          const userUpdateData = rateLimits.user_update || {}
+          
+          // Calculate new count (increment or reset if >1 minute passed)
+          const now = new Date()
+          const lastReset = userUpdateData.lastReset?.toDate ? userUpdateData.lastReset.toDate() : new Date(0)
+          const minutesSinceReset = (now - lastReset) / 60000
+          
+          const newCount = minutesSinceReset >= 1.0 ? 1 : (userUpdateData.count || 0) + 1
+          
+          await updateDoc(userRef, {
+            isPro: true,
+            upgradedAt: serverTimestamp(),
+            'rateLimits.user_update': {
+              lastReset: minutesSinceReset >= 1.0 ? serverTimestamp() : userUpdateData.lastReset,
+              count: newCount
+            }
+          })
+          
+          console.log('✅ Pro upgrade synced to Firestore successfully')
+          return { success: true, requiresAuth: false }
         } catch (error) {
           console.error('❌ Failed to sync Pro upgrade to Firestore:', error)
-          // Don't throw - local upgrade still works
+          // Revert local state on Firebase error
+          set({ 
+            userTier: 'free',
+            showUpgradePrompt: true,
+            showProWelcome: false,
+            error: 'Failed to upgrade. Please try again or contact support.' 
+          })
+          return { success: false, requiresAuth: false }
         }
       },
 
@@ -613,6 +639,60 @@ const useDebtStore = create(
         error: null 
       }),
       clearAllData: () => set({ customers: [], error: null, userTier: 'free', showUpgradePrompt: false, showProWelcome: false, currentPage: 1 }),
+
+      // Manual migration helper for users whose data wasn't migrated during account creation
+      manualMigrateToFirestore: async () => {
+        try {
+          set({ isLoading: true, error: null })
+          
+          // Check if user is authenticated
+          const { auth } = await import('../firebase/config.js')
+          if (!auth.currentUser) {
+            set({ 
+              error: 'Please log in to migrate your data to the cloud.',
+              isLoading: false
+            })
+            return { success: false, message: 'User not authenticated' }
+          }
+          
+          // Import and run manual migration
+          const { manualMigrateLocalDataToFirestore } = await import('../firebase/dataSync.js')
+          const result = await manualMigrateLocalDataToFirestore(auth.currentUser.uid)
+          
+          if (result.success) {
+            set({ 
+              error: null,
+              isLoading: false
+            })
+            
+            // Refresh data from Firestore after successful migration
+            const { syncFirestoreToLocal } = await import('../firebase/dataSync.js')
+            await syncFirestoreToLocal(auth.currentUser.uid)
+            
+            // Enable real-time sync after manual migration
+            const { enableRealtimeSync } = get()
+            if (!get().isRealtimeSyncEnabled) {
+              await enableRealtimeSync(auth.currentUser.uid)
+              console.log('✅ Real-time sync enabled after manual migration')
+            }
+            
+            return result
+          } else {
+            set({ 
+              error: result.message || 'Migration failed',
+              isLoading: false
+            })
+            return result
+          }
+        } catch (error) {
+          console.error('❌ Manual migration error:', error)
+          set({ 
+            error: 'Failed to migrate data. Please try again or contact support.',
+            isLoading: false
+          })
+          return { success: false, message: error.message }
+        }
+      },
 
       // Load customers from cloud sync
       loadCustomers: (customers) => {
@@ -682,6 +762,117 @@ const useDebtStore = create(
 
       // Reset pagination when filter changes
       resetPagination: () => set({ currentPage: 1 }),
+
+      // Real-time sync management
+      realtimeSyncListeners: null,
+      isRealtimeSyncEnabled: false,
+
+      // Enable real-time sync when user is authenticated
+      enableRealtimeSync: async (userId) => {
+        try {
+          // Don't enable if already enabled
+          if (get().isRealtimeSyncEnabled) {
+            console.log('🔄 Real-time sync already enabled')
+            return
+          }
+
+          const { subscribeToCustomers, subscribeToDebts } = await import('../firebase/firestore.js')
+          
+          // Set up customers listener
+          const customersUnsubscribe = subscribeToCustomers(userId, (result) => {
+            if (result.success) {
+              console.log('🔄 Real-time customers update:', result.data.length)
+              // Update local state with Firestore changes
+              set((state) => ({
+                ...state,
+                customers: result.data.map(customer => ({
+                  ...customer,
+                  debts: customer.debts || [],
+                  createdAt: customer.createdAt?.toDate?.()?.toISOString() || customer.createdAt
+                }))
+              }))
+            } else {
+              console.error('❌ Real-time customers sync error:', result.error)
+            }
+          })
+
+          // Set up debts listener
+          const debtsUnsubscribe = subscribeToDebts(userId, (result) => {
+            if (result.success) {
+              console.log('🔄 Real-time debts update:', result.data.length)
+              // Update customers with debt changes
+              set((state) => {
+                const debtsMap = new Map()
+                
+                // Group debts by customer
+                result.data.forEach(debt => {
+                  if (!debtsMap.has(debt.customerId)) {
+                    debtsMap.set(debt.customerId, [])
+                  }
+                  debtsMap.get(debt.customerId).push({
+                    id: debt.id,
+                    amount: debt.amount,
+                    reason: debt.reason,
+                    dateBorrowed: debt.dateBorrowed?.toDate?.()?.toISOString() || debt.dateBorrowed,
+                    dueDate: debt.dueDate?.toDate?.()?.toISOString() || debt.dueDate,
+                    paid: debt.status === 'paid',
+                    payments: debt.payments || [],
+                    createdAt: debt.createdAt?.toDate?.()?.toISOString() || debt.createdAt
+                  })
+                })
+
+                // Update customers with their debts
+                const updatedCustomers = state.customers.map(customer => ({
+                  ...customer,
+                  debts: debtsMap.get(customer.id) || []
+                }))
+
+                return {
+                  ...state,
+                  customers: updatedCustomers
+                }
+              })
+            } else {
+              console.error('❌ Real-time debts sync error:', result.error)
+            }
+          })
+
+          // Store unsubscribe functions
+          set({ 
+            realtimeSyncListeners: {
+              customers: customersUnsubscribe,
+              debts: debtsUnsubscribe
+            },
+            isRealtimeSyncEnabled: true
+          })
+
+          console.log('✅ Real-time sync enabled')
+        } catch (error) {
+          console.error('❌ Failed to enable real-time sync:', error)
+        }
+      },
+
+      // Disable real-time sync
+      disableRealtimeSync: () => {
+        const { realtimeSyncListeners } = get()
+        
+        if (realtimeSyncListeners) {
+          // Unsubscribe from all listeners
+          if (realtimeSyncListeners.customers) {
+            realtimeSyncListeners.customers()
+          }
+          if (realtimeSyncListeners.debts) {
+            realtimeSyncListeners.debts()
+          }
+          
+          set({ 
+            realtimeSyncListeners: null,
+            isRealtimeSyncEnabled: false
+          })
+          
+          console.log('🔄 Real-time sync disabled')
+        }
+      },
     }),
     {
       name: 'trackdeni-storage',

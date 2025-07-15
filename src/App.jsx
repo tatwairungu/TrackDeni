@@ -87,8 +87,16 @@ function App() {
         
         // Direct upgrade to Pro
         upgradeToPro: async () => {
-          await store.upgradeToProTier()
-          console.log('⬆️ Upgraded to Pro tier')
+          const result = await store.upgradeToProTier()
+          
+          if (result.requiresAuth) {
+            console.log('⚠️ Cannot upgrade: Authentication required')
+            console.log('💡 User must create an account first to upgrade to Pro')
+          } else if (result.success) {
+            console.log('⬆️ Upgraded to Pro tier')
+          } else {
+            console.log('❌ Upgrade failed')
+          }
         },
         
         // Reset to free tier
@@ -284,7 +292,17 @@ function App() {
           
           try {
             // First upgrade to Pro
-            await store.upgradeToProTier()
+            const result = await store.upgradeToProTier()
+            
+            if (result.requiresAuth) {
+              console.log('⚠️ Cannot test Pro tier limits: Authentication required')
+              console.log('💡 User must create an account first to upgrade to Pro')
+              return
+            } else if (!result.success) {
+              console.log('❌ Failed to upgrade to Pro for testing')
+              return
+            }
+            
             console.log('💎 Upgraded to Pro tier for testing')
             
             // Try to add many customers rapidly
@@ -678,6 +696,109 @@ function App() {
         }
       }
       
+      // Add manual migration function for users whose data wasn't migrated during account creation
+      window.trackDeniDev.manualMigrateToFirestore = async () => {
+        try {
+          const { manualMigrateToFirestore } = useDebtStore.getState()
+          console.log('🔄 Starting manual migration...')
+          const result = await manualMigrateToFirestore()
+          
+          if (result.success) {
+            console.log('✅ Manual migration completed successfully!')
+            console.log(`📊 Migration result: ${result.migratedCustomers} customers, ${result.migratedDebts} debts`)
+            console.log(`💬 Message: ${result.message}`)
+            
+            // Refresh the page to show the updated data
+            window.location.reload()
+          } else {
+            console.error('❌ Manual migration failed:', result.message)
+          }
+          
+          return result
+        } catch (error) {
+          console.error('❌ Error during manual migration:', error)
+          return { success: false, message: error.message }
+        }
+      }
+      
+      // Add debug function to check current local data
+      window.trackDeniDev.debugLocalData = async () => {
+        try {
+          const { getLocalData } = await import('./firebase/dataSync.js')
+          const localData = await getLocalData()
+          
+          if (localData && localData.customers) {
+            console.log('📊 Local data found:', {
+              customers: localData.customers.length,
+              totalDebts: localData.customers.reduce((total, customer) => total + (customer.debts?.length || 0), 0)
+            })
+            console.log('📊 Detailed data:', localData)
+          } else {
+            console.log('📊 No local data found')
+          }
+          
+          return localData
+        } catch (error) {
+          console.error('❌ Error checking local data:', error)
+          return null
+        }
+      }
+
+      // Add debug function to test real-time sync
+      window.trackDeniDev.debugRealtimeSync = () => {
+        const { isRealtimeSyncEnabled } = useDebtStore.getState()
+        console.log('🔄 Real-time sync status:', {
+          enabled: isRealtimeSyncEnabled,
+          listeners: isRealtimeSyncEnabled ? 'Active' : 'Inactive'
+        })
+        return isRealtimeSyncEnabled
+      }
+
+      // Add enhanced migration function with better debugging
+      window.trackDeniDev.debugMigration = async () => {
+        try {
+          // First check if user is authenticated
+          const { auth } = await import('./firebase/config.js')
+          if (!auth.currentUser) {
+            console.log('❌ User not authenticated. Please log in first.')
+            return { success: false, message: 'User not authenticated' }
+          }
+
+          // Check local data
+          console.log('🔍 Step 1: Checking local data...')
+          const localData = await window.trackDeniDev.debugLocalData()
+          
+          if (!localData || !localData.customers || localData.customers.length === 0) {
+            console.log('📭 No local data to migrate')
+            return { success: true, message: 'No local data to migrate' }
+          }
+
+          // Check cloud data
+          console.log('🔍 Step 2: Checking cloud data...')
+          const { collection, getDocs } = await import('firebase/firestore')
+          const { db } = await import('./firebase/config.js')
+          
+          const customersRef = collection(db, 'users', auth.currentUser.uid, 'customers')
+          const existingCustomers = await getDocs(customersRef)
+          
+          console.log('☁️ Cloud data found:', existingCustomers.size, 'customers')
+          
+          if (existingCustomers.size > 0) {
+            console.log('⚠️ User already has cloud data, migration may not be needed')
+            return { success: false, message: 'User already has cloud data' }
+          }
+
+          // Perform migration
+          console.log('🔄 Step 3: Starting migration...')
+          const result = await window.trackDeniDev.manualMigrateToFirestore()
+          
+          return result
+        } catch (error) {
+          console.error('❌ Debug migration error:', error)
+          return { success: false, message: error.message }
+        }
+      }
+      
       console.log('🛠️ TrackDeni Dev Tools Available:')
       console.log('  trackDeniDev.showUpgrade() - Show upgrade prompt')
       console.log('  trackDeniDev.addTestCustomers(5) - Add test customers')
@@ -713,6 +834,9 @@ function App() {
       console.log('  trackDeniDev.toggleAnimations("none"|"reduced"|"full"|"auto") - 🎭 Test animation settings')
       console.log('  trackDeniDev.toggleVisualComplexity("simple"|"standard"|"rich"|"auto") - 🎨 Test visual settings')
       console.log('  trackDeniDev.testAnimationSettings() - 🎭 Test all animation settings')
+      console.log('  trackDeniDev.debugLocalData() - 📊 Debug local data')
+      console.log('  trackDeniDev.debugRealtimeSync() - 🔄 Test real-time sync status')
+      console.log('  trackDeniDev.debugMigration() - 🔄 Enhanced debug migration')
     }
   }, [])
 

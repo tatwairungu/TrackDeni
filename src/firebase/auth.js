@@ -52,6 +52,16 @@ export const signUpWithEmail = async (email, password, userData) => {
     const migrationResult = await migrateLocalDataToFirestore(user.uid)
     console.log('📊 Migration result:', migrationResult)
     
+    // Enable real-time sync AFTER migration is complete
+    try {
+      const { default: useDebtStore } = await import('../store/useDebtStore.js')
+      const { enableRealtimeSync } = useDebtStore.getState()
+      await enableRealtimeSync(user.uid)
+      console.log('✅ Real-time sync enabled after migration')
+    } catch (error) {
+      console.error('❌ Failed to enable real-time sync after migration:', error)
+    }
+    
     return { 
       success: true, 
       user,
@@ -122,6 +132,16 @@ export const signInWithGoogle = async () => {
       // Migrate local data for new users
       const migrationResult = await migrateLocalDataToFirestore(user.uid)
       console.log('📊 Google signup migration result:', migrationResult)
+      
+      // Enable real-time sync AFTER migration is complete
+      try {
+        const { default: useDebtStore } = await import('../store/useDebtStore.js')
+        const { enableRealtimeSync } = useDebtStore.getState()
+        await enableRealtimeSync(user.uid)
+        console.log('✅ Real-time sync enabled after Google signup migration')
+      } catch (error) {
+        console.error('❌ Failed to enable real-time sync after Google signup migration:', error)
+      }
       
       return { 
         success: true, 

@@ -5,6 +5,8 @@ import { t } from '../utils/localization'
 const UpgradePrompt = ({ isOpen, onClose }) => {
   const { upgradeToProTier } = useDebtStore()
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
+  const [showSignupRequired, setShowSignupRequired] = useState(false)
+  const [isUpgrading, setIsUpgrading] = useState(false)
 
   if (!isOpen) return null
 
@@ -13,10 +15,34 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
   }
 
   const handleMockUpgrade = async () => {
-    // For demo purposes, we'll just upgrade the user
-    // In production, this would integrate with M-Pesa or other payment systems
-    await upgradeToProTier()
+    setIsUpgrading(true)
+    
+    try {
+      // For demo purposes, we'll just upgrade the user
+      // In production, this would integrate with M-Pesa or other payment systems
+      const result = await upgradeToProTier()
+      
+      if (result.requiresAuth) {
+        // User needs to create an account first
+        setShowSignupRequired(true)
+        setShowPaymentOptions(false)
+      } else if (result.success) {
+        // Upgrade successful
+        onClose()
+      }
+      // If not successful and doesn't require auth, error is handled by store
+    } catch (error) {
+      console.error('Upgrade failed:', error)
+    } finally {
+      setIsUpgrading(false)
+    }
+  }
+
+  const handleCreateAccount = () => {
+    // Close the upgrade modal and trigger signup
     onClose()
+    // You can emit a custom event or use a callback to trigger signup modal
+    window.dispatchEvent(new CustomEvent('triggerSignup'))
   }
 
   const benefits = [
@@ -56,7 +82,62 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
     <>
       <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-          {!showPaymentOptions ? (
+          
+          {showSignupRequired ? (
+            // Account required screen
+            <div className="p-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">👤</span>
+                </div>
+                <h2 className="text-2xl font-bold text-text mb-2">Account Required</h2>
+                <p className="text-gray-600 leading-relaxed">
+                  To upgrade to Pro, you need to create a TrackDeni account. This ensures your subscription is properly managed and your data is backed up.
+                </p>
+              </div>
+
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+                <h3 className="font-semibold text-primary mb-2">Why create an account?</h3>
+                <div className="space-y-2 text-sm text-primary/80">
+                  <div className="flex items-start space-x-2">
+                    <span>✓</span>
+                    <span>Secure subscription management</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span>✓</span>
+                    <span>Automatic data backup and sync</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span>✓</span>
+                    <span>Access from multiple devices</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span>✓</span>
+                    <span>Priority customer support</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Maybe Later
+                </button>
+                <button
+                  onClick={handleCreateAccount}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-semibold"
+                >
+                  Create Account
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500 text-center mt-4">
+                Free to create • Takes less than 1 minute
+              </p>
+            </div>
+          ) : !showPaymentOptions ? (
           // Main upgrade screen
           <div className="p-6">
             <div className="text-center mb-6">
@@ -127,7 +208,8 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
             <div className="space-y-4 mb-6">
               <button
                 onClick={handleMockUpgrade}
-                className="w-full p-4 border border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-left"
+                disabled={isUpgrading}
+                className="w-full p-4 border border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-success rounded-lg flex items-center justify-center">
@@ -142,7 +224,8 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
 
               <button
                 onClick={handleMockUpgrade}
-                className="w-full p-4 border border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-left"
+                disabled={isUpgrading}
+                className="w-full p-4 border border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
@@ -157,7 +240,8 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
 
               <button
                 onClick={handleMockUpgrade}
-                className="w-full p-4 border border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-left"
+                disabled={isUpgrading}
+                className="w-full p-4 border border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
@@ -174,7 +258,8 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowPaymentOptions(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                disabled={isUpgrading}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back
               </button>
@@ -185,6 +270,15 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
                 <span className="font-semibold">Secure Payment</span> • 256-bit SSL encryption
               </p>
             </div>
+            
+            {isUpgrading && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                  <span>Processing upgrade...</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
         </div>

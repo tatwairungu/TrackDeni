@@ -43,16 +43,50 @@ const AuthGuard = ({ children, requireAuth = false }) => {
   }, [user, disableSignupEncouragement])
 
   useEffect(() => {
+    // Listen for custom signup trigger event from upgrade process
+    const handleTriggerSignup = () => {
+      setAuthModalState(prev => ({
+        ...prev,
+        showSignup: true
+      }))
+    }
+    
+    window.addEventListener('triggerSignup', handleTriggerSignup)
+    
+    return () => {
+      window.removeEventListener('triggerSignup', handleTriggerSignup)
+    }
+  }, [])
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
           // Get user profile data
           const userProfile = await getUserProfile(firebaseUser.uid)
-          setUser({
+          const authenticatedUser = {
             ...firebaseUser,
             profile: userProfile
-          })
+          }
+          
+          setUser(authenticatedUser)
+          
+          // Check if user was just created (migration might be in progress)
+          // We'll let the auth functions handle enabling real-time sync after migration
+          const isNewUser = authenticatedUser.metadata?.creationTime === authenticatedUser.metadata?.lastSignInTime
+          
+          if (!isNewUser) {
+            // For existing users, enable real-time sync immediately
+            const { enableRealtimeSync } = useDebtStore.getState()
+            await enableRealtimeSync(firebaseUser.uid)
+          }
+          // For new users, real-time sync will be enabled after migration in auth functions
+          
         } else {
+          // Disable real-time sync when user logs out
+          const { disableRealtimeSync } = useDebtStore.getState()
+          disableRealtimeSync()
+          
           setUser(null)
         }
       } catch (error) {
