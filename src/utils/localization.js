@@ -27,60 +27,17 @@ export const translations = {
       }
     },
     
-    // Tutorial
-    tutorial: {
-      title: 'Quick Tutorial',
-      subtitle: 'Let\'s add your first customer and debt',
-      description: 'We\'ll walk you through adding a customer, recording a debt, and marking it as paid.',
-      startTutorial: 'Start Tutorial',
-      skipTutorial: 'Skip Tutorial',
-      step1: {
-        title: 'Add Your First Customer',
-        description: 'Tap the + button in the top right to add a new customer and their debt.'
-      },
-      step2: {
-        title: 'Fill Customer Details',
-        description: 'Enter customer name, phone number, debt amount, and what they borrowed.'
-      },
-      step3: {
-        title: 'Record Payments',
-        description: 'When customers pay, tap "Record Payment" to track what they\'ve paid.'
-      },
-      step4: {
-        title: 'You\'re All Set!',
-        description: 'You now know how to track debts and payments. Start managing your business!'
-      },
-      interactive: {
-        step1: {
-          title: 'Click the + Button',
-          description: 'Tap the green + button in the top right corner to add your first customer and debt.'
-        },
-        step2: {
-          title: 'Fill Customer Details',
-          description: 'Enter the customer\'s name, phone number, debt amount, and what they borrowed. Then click Save.'
-        },
-        step3: {
-          title: 'Record a Payment',
-          description: 'Now click the "Pay" button on the customer card to record a payment.'
-        },
-        step4: {
-          title: 'Payment Options',
-          description: 'You can choose "Partial Payment" to pay part of the debt, or "Pay in Full" to clear everything. Then click "Record Payment".'
-        },
-        step5: {
-          title: 'Congratulations! 🎉',
-          description: 'You\'ve completed the tutorial! You now know how to track debts and payments. Click below to clear this test data and start using the app to grow your business.'
-        }
-      },
-      complete: 'Clear Test Data & Start Fresh'
-    },
-    
-    // Navigation
+    // Common words
     next: 'Next',
-    previous: 'Previous',
+    back: 'Back',
     skip: 'Skip',
     getStarted: 'Get Started',
-    skipForNow: 'Skip for now',
+    complete: 'Complete',
+    
+    // Error messages
+    errorTitle: 'Something went wrong',
+    errorDescription: 'Please try again. If the problem persists, contact support.',
+    tryAgain: 'Try Again',
     
     // Common actions
     add: 'Add',
@@ -159,60 +116,17 @@ export const translations = {
       }
     },
     
-    // Tutorial
-    tutorial: {
-      title: 'Mafunzo ya Haraka',
-      subtitle: 'Hebu tuongeze mteja wako wa kwanza na deni',
-      description: 'Tutakuongoza kuongeza mteja, kurekodi deni, na kuliandika limelipwa.',
-      startTutorial: 'Anza Mafunzo',
-      skipTutorial: 'Ruka Mafunzo',
-      step1: {
-        title: 'Ongeza Mteja Wako wa Kwanza',
-        description: 'Bonyeza kitufe cha + juu kulia kuongeza mteja mpya na deni lake.'
-      },
-      step2: {
-        title: 'Jaza Maelezo ya Mteja',
-        description: 'Ingiza jina la mteja, nambari ya simu, kiasi cha deni, na alichokopa.'
-      },
-      step3: {
-        title: 'Rekodi Malipo',
-        description: 'Mteja akilipa, bonyeza "Rekodi Malipo" kufuatilia alicholipa.'
-      },
-      step4: {
-        title: 'Umekwisha Tayari!',
-        description: 'Sasa unajua jinsi ya kufuatilia madeni na malipo. Anza kusimamia biashara yako!'
-      },
-      interactive: {
-        step1: {
-          title: 'Bonyeza Kitufe cha +',
-          description: 'Bonyeza kitufe cha kijani + upande wa juu kulia kuongeza mteja wako wa kwanza na deni.'
-        },
-        step2: {
-          title: 'Jaza Maelezo ya Mteja',
-          description: 'Ingiza jina la mteja, nambari ya simu, kiasi cha deni, na alichokopa. Kisha bonyeza Hifadhi.'
-        },
-        step3: {
-          title: 'Rekodi Malipo',
-          description: 'Sasa bonyeza kitufe cha "Lipa" kwenye kadi ya mteja kurekodi malipo.'
-        },
-        step4: {
-          title: 'Chaguo za Malipo',
-          description: 'Unaweza kuchagua "Malipo ya Sehemu" kulipa sehemu ya deni, au "Lipa Kamili" kufuta yote. Kisha bonyeza "Rekodi Malipo".'
-        },
-        step5: {
-          title: 'Hongera! 🎉',
-          description: 'Umekamilisha mafunzo! Sasa unajua jinsi ya kufuatilia madeni na malipo. Bonyeza hapa chini kufuta data hii ya majaribio na kuanza kutumia app kukua biashara yako.'
-        }
-      },
-      complete: 'Futa Data ya Majaribio & Anza Upya'
-    },
-    
-    // Navigation
+    // Common words
     next: 'Ifuatayo',
-    previous: 'Iliyotangulia',
+    back: 'Rudi',
     skip: 'Ruka',
     getStarted: 'Anza',
-    skipForNow: 'Ruka kwa sasa',
+    complete: 'Futa',
+    
+    // Error messages
+    errorTitle: 'Kitu kikubwa kikusudi',
+    errorDescription: 'Tafadhali jaribu tena. Ikiwa matokeo inaweza kupunguzwa, wasiliana na msaada.',
+    tryAgain: 'Jaribu Teni',
     
     // Common actions
     add: 'Ongeza',

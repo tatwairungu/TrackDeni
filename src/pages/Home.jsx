@@ -8,7 +8,7 @@ import PerformanceWarning from '../components/PerformanceWarning'
 import LiteModeIndicator from '../components/LiteModeIndicator'
 import StorageIndicator from '../components/StorageIndicator'
 
-const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
+const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut }) => {
   const { 
     customers, 
     getTotalOwed, 
@@ -395,7 +395,6 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
                     key={customer.id}
                     customer={customer}
                     onClick={onNavigateToCustomer}
-                    tutorial={tutorial}
                   />
                 ))}
               </div>

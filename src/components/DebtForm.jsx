@@ -9,7 +9,7 @@ const parseMonetaryAmount = (amount) => {
   return Math.round(parseFloat(amount) * 100) / 100
 }
 
-const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutorial }) => {
+const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null }) => {
   const { 
     addCustomer, 
     addDebt, 
@@ -189,7 +189,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
   }
 
   return (
-    <form onSubmit={handleSubmit} data-tutorial="customer-form" className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h2 className="text-xl font-semibold text-text mb-4">
         {isNewCustomer ? 'Add New Customer & Debt' : `Add Debt for ${existingCustomer?.name || 'Customer'}`}
       </h2>
@@ -460,7 +460,6 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
         <button
           type="submit"
           disabled={isLoading}
-          data-tutorial="save-debt-button"
           className="flex-[1.5] py-3.5 px-6 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:hover:shadow-md"
         >
           {isLoading ? 'Saving...' : 'Save Debt'}

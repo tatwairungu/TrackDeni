@@ -7,7 +7,6 @@ export const CustomerDetail = lazy(() => import('../pages/CustomerDetail'))
 
 // Lazy load heavy components
 export const OnboardingFlow = lazy(() => import('../components/OnboardingFlow'))
-export const InteractiveTutorial = lazy(() => import('../components/InteractiveTutorial'))
 export const PaymentModal = lazy(() => import('../components/PaymentModal'))
 export const ProWelcomeModal = lazy(() => import('../components/ProWelcomeModal'))
 export const UpgradePrompt = lazy(() => import('../components/UpgradePrompt'))

@@ -5,7 +5,7 @@ import ConfirmationDialog from '../components/ConfirmationDialog'
 import useDebtStore from '../store/useDebtStore'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
 
-const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, user, signIn, signOut }) => {
+const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, user, signIn, signOut }) => {
   const { customers, getCustomerDebtSummary, clearAllData, deleteDebt } = useDebtStore()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
@@ -282,7 +282,6 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
 
                   <button
                     onClick={() => handlePayDebt(debt)}
-                    data-tutorial="record-payment-button"
                     className="w-full bg-primary text-white py-2 rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
                   >
                     Record Payment
@@ -358,7 +357,6 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
         debt={selectedDebt}
         allDebts={paymentMode === 'multiple' ? activeDebts : null}
         isOpen={showPaymentModal}
-        tutorial={tutorial}
         onClose={() => {
           setShowPaymentModal(false)
           setSelectedDebt(null)

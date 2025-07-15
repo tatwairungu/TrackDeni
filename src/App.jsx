@@ -4,7 +4,6 @@ import {
   AddDebt, 
   CustomerDetail, 
   OnboardingFlow, 
-  InteractiveTutorial,
   PaymentModal,
   ProWelcomeModal,
   UpgradePrompt,
@@ -15,7 +14,6 @@ import {
 import AuthGuard from './components/AuthGuard'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import OfflineIndicator from './components/OfflineIndicator'
-import { useTutorial } from './hooks/useTutorial'
 import useDebtStore from './store/useDebtStore'
 import { initializePerformanceOptimizations } from './utils/performanceOptimizations'
 
@@ -25,14 +23,17 @@ function App() {
   const [isNewCustomerFlow, setIsNewCustomerFlow] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  
-  const tutorial = useTutorial()
 
   // Initialize app and check if user has seen intro
   useEffect(() => {
     const hasSeenIntro = localStorage.getItem('trackdeni-has-seen-intro') === 'true'
     setShowOnboarding(!hasSeenIntro)
     setIsLoading(false)
+    
+    // Clean up old tutorial-related localStorage items
+    localStorage.removeItem('hasSeenTutorial')
+    localStorage.removeItem('shouldShowTutorial')
+    localStorage.removeItem('tutorialStep')
   }, [])
 
   // Initialize performance optimizations
@@ -725,10 +726,6 @@ function App() {
     setSelectedCustomerId(customerId)
     setIsNewCustomerFlow(isNewCustomer)
     setCurrentPage('add-debt')
-    // Handle tutorial progression
-    if (tutorial.isActive && tutorial.currentStep?.id === 'click-add-debt') {
-      tutorial.nextStep()
-    }
   }
 
   const navigateToCustomer = (customer, action = 'view') => {
@@ -748,16 +745,13 @@ function App() {
       setCurrentPage('customer-detail')
     } else {
       // New customer + debt OR no customer → go to home page
-      navigateToHome()
+    navigateToHome()
     }
   }
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false)
     localStorage.setItem('trackdeni-has-seen-intro', 'true')
-    
-    // Start tutorial after onboarding
-    tutorial.startTutorial()
   }
 
   const renderCurrentPage = (user, signIn, signOut) => {
@@ -768,7 +762,6 @@ function App() {
             <Home 
               onNavigateToAddDebt={navigateToAddDebt}
               onNavigateToCustomer={navigateToCustomer}
-              tutorial={tutorial}
               user={user}
               signIn={signIn}
               signOut={signOut}
@@ -778,42 +771,39 @@ function App() {
       case 'add-debt':
         return (
           <Suspense fallback={<PageLoadingFallback message="Loading form..." />}>
-            <AddDebt 
-              customerId={selectedCustomerId}
-              onBack={navigateToHome}
-              onSuccess={handleDebtSuccess}
-              tutorial={tutorial}
+          <AddDebt
+            customerId={selectedCustomerId}
+            onBack={navigateToHome}
+            onSuccess={handleDebtSuccess}
               user={user}
               signIn={signIn}
               signOut={signOut}
-            />
+          />
           </Suspense>
         )
       case 'customer-detail':
         return (
           <Suspense fallback={<PageLoadingFallback message="Loading customer..." />}>
-            <CustomerDetail 
-              customerId={selectedCustomerId}
-              onBack={navigateToHome}
-              onNavigateToAddDebt={navigateToAddDebt}
-              tutorial={tutorial}
+          <CustomerDetail
+            customerId={selectedCustomerId}
+            onBack={navigateToHome}
+            onNavigateToAddDebt={navigateToAddDebt}
               user={user}
               signIn={signIn}
               signOut={signOut}
-            />
+          />
           </Suspense>
         )
       default:
         return (
           <Suspense fallback={<PageLoadingFallback message="Loading..." />}>
-            <Home 
-              onNavigateToAddDebt={navigateToAddDebt}
-              onNavigateToCustomer={navigateToCustomer}
-              tutorial={tutorial}
+          <Home
+            onNavigateToAddDebt={navigateToAddDebt}
+            onNavigateToCustomer={navigateToCustomer}
               user={user}
               signIn={signIn}
               signOut={signOut}
-            />
+          />
           </Suspense>
         )
     }
@@ -836,13 +826,6 @@ function App() {
       {({ user, signIn, signOut }) => (
         <>
           {renderCurrentPage(user, signIn, signOut)}
-          
-          {/* Tutorial Overlay */}
-          {tutorial.isActive && (
-            <Suspense fallback={<ModalLoadingFallback />}>
-              <InteractiveTutorial tutorial={tutorial} />
-            </Suspense>
-          )}
           
           {/* PWA Install Prompt */}
           <PWAInstallPrompt />

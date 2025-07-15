@@ -7,25 +7,12 @@ const parseMonetaryAmount = (amount) => {
   return Math.round(parseFloat(amount) * 100) / 100
 }
 
-const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) => {
+const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose }) => {
   const { addPayment, markDebtAsPaid } = useDebtStore()
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentType, setPaymentType] = useState('partial') // partial or full
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-
-  // Handle tutorial progression when modal opens
-  useEffect(() => {
-    if (isOpen && tutorial?.onRecordPaymentClicked) {
-      console.log('PaymentModal: Advancing tutorial step')
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        tutorial.onRecordPaymentClicked()
-        console.log('PaymentModal: Called onRecordPaymentClicked')
-      }, 50)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen, tutorial])
 
   if (!isOpen || !customer) return null
 
@@ -95,8 +82,6 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
       setPaymentType('partial')
       onClose()
       
-      // Handle tutorial progression
-      tutorial?.onPaymentSubmitted()
     } catch (err) {
       setError('Failed to record payment. Please try again.')
     } finally {
@@ -200,7 +185,7 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
           </div>
         )}
 
-        <form onSubmit={handleSubmit} data-tutorial="payment-modal" className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Payment Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
@@ -317,7 +302,6 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
             <button
               type="submit"
               disabled={isLoading}
-              data-tutorial="record-payment-button"
               className={`flex-[1.5] py-3.5 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                 paymentType === 'full'
                   ? 'bg-success hover:bg-success/90 text-white disabled:hover:bg-success'

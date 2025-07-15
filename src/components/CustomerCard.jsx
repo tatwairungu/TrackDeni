@@ -3,7 +3,7 @@ import { getDebtStatus, getStatusColor, getStatusText, formatDateShort } from '.
 import useDebtStore from '../store/useDebtStore'
 import PaymentModal from './PaymentModal'
 
-const CustomerCard = memo(({ customer, onClick, tutorial }) => {
+const CustomerCard = memo(({ customer, onClick }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const { getCustomerDebtSummary } = useDebtStore()
@@ -148,7 +148,6 @@ const CustomerCard = memo(({ customer, onClick, tutorial }) => {
         {urgentDebt && (
           <button
             onClick={handleRecordPayment}
-            data-tutorial="pay-button"
             className="bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 transition-colors"
           >
             Pay
@@ -174,9 +173,9 @@ const CustomerCard = memo(({ customer, onClick, tutorial }) => {
       <PaymentModal
         customer={customer}
         debt={selectedDebt}
+        allDebts={customer.debts}
         isOpen={showPaymentModal}
         onClose={handleClosePaymentModal}
-        tutorial={tutorial}
       />
     </div>
   )

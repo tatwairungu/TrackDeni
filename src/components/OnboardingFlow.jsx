@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { t, setLanguage } from '../utils/localization'
 
 const OnboardingFlow = ({ onComplete }) => {
-  const [currentStep, setCurrentStep] = useState(0) // 0: language, 1-3: intro slides, 4: tutorial prompt
-  const [selectedLanguage, setSelectedLanguage] = useState('english')
+  const [currentStep, setCurrentStep] = useState(0) // 0: language, 1-3: intro slides
+  const [selectedLanguage, setSelectedLanguage] = useState('en')
 
   const languages = [
     { code: 'english', name: 'English', flag: '🇬🇧' },
@@ -40,35 +40,11 @@ const OnboardingFlow = ({ onComplete }) => {
     setCurrentStep(1) // Move to first slide
   }
 
-  const handleNext = () => {
-    if (currentStep < slides.length) {
-      setCurrentStep(currentStep + 1)
-    } else if (currentStep === slides.length) {
-      // Move to tutorial prompt
-      setCurrentStep(currentStep + 1)
-    } else {
-      // Store completion in localStorage and complete onboarding
-      localStorage.setItem('hasSeenIntro', 'true')
-      localStorage.setItem('hasSeenTutorial', 'true')
-      onComplete()
-    }
-  }
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
-    }
-  }
-
-  const handleSkip = () => {
-    localStorage.setItem('hasSeenIntro', 'true')
-    localStorage.setItem('hasSeenTutorial', 'true')
-    onComplete()
-  }
-
-  const handleStartTutorial = () => {
-    localStorage.setItem('hasSeenIntro', 'true')
-    localStorage.setItem('shouldShowTutorial', 'true')
+  const handleFinish = () => {
+    // Save language preference
+    localStorage.setItem('trackdeni-language', selectedLanguage)
+    
+    // Complete onboarding
     onComplete()
   }
 
@@ -115,7 +91,7 @@ const OnboardingFlow = ({ onComplete }) => {
         
         <div className="p-6">
           <button
-            onClick={handleSkip}
+            onClick={handleFinish}
             className="w-full text-gray-500 text-sm py-3"
           >
             Skip for now
@@ -125,92 +101,51 @@ const OnboardingFlow = ({ onComplete }) => {
     )
   }
 
-  // Tutorial Prompt Screen
-  if (currentStep === slides.length + 1) {
+  if (currentStep >= 1 && currentStep <= 3) {
+    // Intro slides
     return (
-      <div className="min-h-screen bg-bg flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-24 h-24 bg-accent rounded-full flex items-center justify-center mb-8">
-            <span className="text-4xl">🎓</span>
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+        <div className="max-w-sm w-full bg-white rounded-lg shadow-lg p-6">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">{slides[currentStep - 1].icon}</span>
+            </div>
+            <h2 className="text-xl font-bold text-text mb-2">{t(slides[currentStep - 1].titleKey)}</h2>
+            <p className="text-gray-600 leading-relaxed">{t(slides[currentStep - 1].descriptionKey)}</p>
           </div>
           
-          <h1 className="text-2xl font-bold text-text mb-4 text-center">{t('tutorial.title')}</h1>
-          <p className="text-lg text-gray-600 mb-6 text-center">{t('tutorial.subtitle')}</p>
-          <p className="text-gray-600 text-center leading-relaxed max-w-sm">{t('tutorial.description')}</p>
-        </div>
-        
-        <div className="p-6 space-y-3">
-          <button
-            onClick={handleStartTutorial}
-            className="w-full btn-primary py-4 text-lg"
-          >
-            {t('tutorial.startTutorial')}
-          </button>
+          <div className="flex gap-2 justify-center mb-6">
+            {slides.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full ${
+                  index === currentStep - 1 ? 'bg-primary' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
           
-          <button
-            onClick={handleSkip}
-            className="w-full text-gray-500 py-3"
-          >
-            {t('tutorial.skipTutorial')}
-          </button>
+          <div className="flex gap-3">
+            {currentStep < 3 ? (
+              <button
+                onClick={() => setCurrentStep(currentStep + 1)}
+                className="flex-1 btn-primary py-3"
+              >
+                {t('next')}
+              </button>
+            ) : (
+              <button
+                onClick={handleFinish}
+                className="flex-1 btn-primary py-3"
+              >
+                {t('getStarted')}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     )
   }
-
-  // Intro Slides
-  const slide = slides[currentStep - 1]
-  const isLastSlide = currentStep === slides.length
-
-  return (
-    <div className="min-h-screen bg-bg flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className={`w-24 h-24 ${slide.color} rounded-full flex items-center justify-center mb-8`}>
-          <span className="text-4xl">{slide.icon}</span>
-        </div>
-        
-        <h1 className="text-2xl font-bold text-text mb-4 text-center">{t(slide.titleKey)}</h1>
-        <p className="text-lg text-gray-600 mb-6 text-center">{t(slide.subtitleKey)}</p>
-        <p className="text-gray-600 text-center leading-relaxed max-w-sm">{t(slide.descriptionKey)}</p>
-        
-        {/* Progress indicators */}
-        <div className="flex gap-2 mt-8">
-          {slides.map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full ${
-                index === currentStep - 1 ? 'bg-primary' : 'bg-gray-300'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-      
-      <div className="p-6 space-y-3">
-        <button
-          onClick={handleNext}
-          className="w-full btn-primary py-4 text-lg"
-        >
-          {isLastSlide ? t('next') : t('next')}
-        </button>
-        
-        <div className="flex justify-between">
-          <button
-            onClick={handlePrevious}
-            className="text-gray-500 py-2 px-4"
-          >
-            {t('previous')}
-          </button>
-          <button
-            onClick={handleSkip}
-            className="text-gray-500 py-2 px-4"
-          >
-            {t('skip')}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export default OnboardingFlow 
