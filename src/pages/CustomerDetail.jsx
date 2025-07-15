@@ -230,7 +230,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
                       </span>
                       <button
                         onClick={() => handleDeleteDebt(debt)}
-                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        className="p-1 text-gray-400 hover:text-danger hover:bg-danger/10 rounded transition-colors"
                         title="Delete debt"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,7 +265,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
                             <div className="flex items-center gap-1">
                               <span>{formatDateShort(payment.date)}</span>
                               {payment.source === 'overpayment_auto_clear' && (
-                                <span className="text-blue-600 font-medium">(Auto-cleared)</span>
+                                <span className="text-primary font-medium">(Auto-cleared)</span>
                               )}
                             </div>
                             <span>KES {payment.amount.toLocaleString()}</span>
@@ -312,7 +312,7 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, tutorial, use
                     <span className="badge-success">Paid</span>
                     <button
                       onClick={() => handleDeleteDebt(debt)}
-                      className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                      className="p-1 text-gray-400 hover:text-danger hover:bg-danger/10 rounded transition-colors"
                       title="Delete debt"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

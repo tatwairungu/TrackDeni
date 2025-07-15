@@ -257,7 +257,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           <div>
             <div className="flex items-center justify-between mb-3">
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone Number {includePhone && <span className="text-red-500">*</span>}
+                Phone Number {includePhone && <span className="text-danger">*</span>}
               </label>
               <div className="flex items-center gap-3">
                 <span className={`text-sm transition-colors ${includePhone ? 'text-gray-600' : 'text-gray-400'}`}>
@@ -285,15 +285,15 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
             )}
             
             {!includePhone && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mt-2">
+              <div className="bg-accent/10 border border-accent/20 rounded-lg p-3 mt-2">
                 <div className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  <svg className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                   <div>
-                    <p className="text-orange-800 text-sm font-medium">SMS features disabled</p>
-                    <p className="text-orange-700 text-xs mt-1">
-                      You won't be able to send payment reminders or notifications to this customer.
+                    <p className="text-accent text-sm font-medium">SMS features disabled</p>
+                    <p className="text-accent/80 text-xs mt-1">
+                      Without a phone number, you won't be able to send payment reminders or track this customer's payment history via SMS.
                     </p>
                   </div>
                 </div>
@@ -358,7 +358,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
             <label htmlFor="dateBorrowed" className="block text-sm font-medium text-gray-700 mb-2">
-              Date Borrowed <span className="text-red-500">*</span>
+              Date Borrowed <span className="text-danger">*</span>
             </label>
             <input
               type="date"
@@ -375,7 +375,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           <div>
             <div className="flex items-center justify-between mb-3">
               <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700">
-                Due Date {includeDueDate && <span className="text-red-500">*</span>}
+                Due Date {includeDueDate && <span className="text-danger">*</span>}
               </label>
               <div className="flex items-center gap-3">
                 <span className={`text-sm transition-colors ${includeDueDate ? 'text-gray-600' : 'text-gray-400'}`}>
@@ -402,15 +402,15 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
             )}
             
             {!includeDueDate && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mt-2">
                 <div className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div>
-                    <p className="text-blue-800 text-sm font-medium">Open-ended debt</p>
-                    <p className="text-blue-700 text-xs mt-1">
-                      Perfect for informal arrangements like "pay when you can" or "next time I see you".
+                    <p className="text-primary text-sm font-medium">Open-ended debt</p>
+                    <p className="text-primary/80 text-xs mt-1">
+                      This debt doesn't have a due date. You can set reminders manually or add a due date later.
                     </p>
                   </div>
                 </div>
@@ -461,7 +461,7 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
           type="submit"
           disabled={isLoading}
           data-tutorial="save-debt-button"
-          className="flex-1 btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-[1.5] py-3.5 px-6 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:hover:shadow-md"
         >
           {isLoading ? 'Saving...' : 'Save Debt'}
         </button>

@@ -37,8 +37,8 @@ const OfflineIndicator = () => {
     <div 
       className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm font-medium transition-all duration-300 ${
         isOnline 
-          ? 'bg-green-500 text-white' 
-          : 'bg-yellow-500 text-gray-800'
+          ? 'bg-success text-white'
+          : 'bg-accent text-white'
       }`}
     >
       <div className="flex items-center justify-center space-x-2">

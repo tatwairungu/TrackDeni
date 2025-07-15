@@ -7,20 +7,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#10b981',
-        'primary-dark': '#059669',
-        'primary-light': '#34d399',
-        accent: '#f59e0b', // Added missing accent color (amber)
-        success: '#10b981',
-        danger: '#ef4444',
-        warning: '#f59e0b',
-        info: '#3b82f6',
-        bg: '#f9fafb',
-        text: '#1f2937',
-        'text-light': '#6b7280',
-        'text-muted': '#9ca3af',
-        border: '#e5e7eb',
-        card: '#ffffff',
+        primary: '#27AE60',        // Pesa Green
+        'primary-dark': '#219A52',  // Darker shade of Pesa Green
+        'primary-light': '#2ECC71', // Lighter shade (same as success)
+        accent: '#F39C12',         // Hustle Orange
+        success: '#2ECC71',        // Confirm Green
+        danger: '#E74C3C',         // Alert Red  
+        warning: '#F39C12',        // Same as accent (Hustle Orange)
+        info: '#3b82f6',          // Keep info blue
+        bg: '#F9F9F9',            // Light Gray
+        text: '#222222',          // Rich Black
+        'text-light': '#6b7280',  // Keep existing
+        'text-muted': '#9ca3af',  // Keep existing
+        border: '#e5e7eb',        // Keep existing
+        card: '#ffffff',          // Keep existing
       },
       keyframes: {
         slideUp: {

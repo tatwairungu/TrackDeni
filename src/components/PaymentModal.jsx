@@ -185,15 +185,15 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
 
         {/* Smart Payment Info */}
         {hasOtherDebts && paymentType === 'partial' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-4">
             <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <div>
-                <p className="text-blue-800 text-sm font-medium">Smart Payment System</p>
-                <p className="text-blue-700 text-xs">
-                  If you pay more than owed, excess will automatically clear other outstanding debts first, then create store credit.
+              <div className="flex-1 min-w-0">
+                <p className="text-primary text-sm font-medium">Smart Payment System</p>
+                <p className="text-primary/80 text-xs">
+                  If you record a payment larger than the debt amount, the excess will automatically be applied to the oldest unpaid debt for this customer.
                 </p>
               </div>
             </div>
@@ -295,7 +295,7 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
                     <div className="flex items-center gap-1">
                       <span>{formatDate(payment.date)}</span>
                       {payment.source === 'overpayment_auto_clear' && (
-                        <span className="text-blue-600 font-medium">(Auto-cleared)</span>
+                        <span className="text-primary font-medium">(Auto-cleared)</span>
                       )}
                     </div>
                     <span className="font-medium">KES {payment.amount.toLocaleString()}</span>
@@ -318,11 +318,11 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
               type="submit"
               disabled={isLoading}
               data-tutorial="record-payment-button"
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`flex-[1.5] py-3.5 px-6 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
                 paymentType === 'full'
-                  ? 'bg-success text-white hover:bg-success/90'
-                  : 'bg-primary text-white hover:bg-primary/90'
-              }`}
+                  ? 'bg-success hover:bg-success/90 text-white disabled:hover:bg-success'
+                  : 'bg-primary hover:bg-primary/90 text-white disabled:hover:bg-primary'
+              } disabled:hover:shadow-md`}
             >
               {isLoading ? 'Recording...' : 
                paymentType === 'full' ? 'Mark as Paid' : 'Record Payment'}
