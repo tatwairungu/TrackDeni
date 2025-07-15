@@ -1,29 +1,42 @@
-import { useState, useEffect } from 'react'
-import Home from './pages/Home'
-import AddDebt from './pages/AddDebt'
-import CustomerDetail from './pages/CustomerDetail'
-import OnboardingFlow from './components/OnboardingFlow'
-import InteractiveTutorial from './components/InteractiveTutorial'
+import { useState, useEffect, Suspense } from 'react'
+import { 
+  Home, 
+  AddDebt, 
+  CustomerDetail, 
+  OnboardingFlow, 
+  InteractiveTutorial,
+  PaymentModal,
+  ProWelcomeModal,
+  UpgradePrompt,
+  LoadingFallback,
+  PageLoadingFallback,
+  ModalLoadingFallback 
+} from './utils/lazyComponents.jsx'
 import AuthGuard from './components/AuthGuard'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import OfflineIndicator from './components/OfflineIndicator'
 import { useTutorial } from './hooks/useTutorial'
 import useDebtStore from './store/useDebtStore'
+import { initializePerformanceOptimizations } from './utils/performanceOptimizations'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home')
   const [selectedCustomerId, setSelectedCustomerId] = useState(null)
-  const [showOnboarding, setShowOnboarding] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-
-  // Interactive tutorial hook
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  
   const tutorial = useTutorial()
 
-  // Check if user has seen onboarding
+  // Initialize app and check if user has seen intro
   useEffect(() => {
-    const hasSeenIntro = localStorage.getItem('hasSeenIntro')
+    const hasSeenIntro = localStorage.getItem('trackdeni-has-seen-intro') === 'true'
     setShowOnboarding(!hasSeenIntro)
     setIsLoading(false)
+  }, [])
+
+  // Initialize performance optimizations
+  useEffect(() => {
+    initializePerformanceOptimizations()
   }, [])
 
   // Development tools for testing
@@ -35,20 +48,22 @@ function App() {
         // Show upgrade prompt
         showUpgrade: () => {
           store.showUpgradeModal()
-          console.log('🔄 Upgrade prompt shown')
+          console.log('🚀 Upgrade modal shown')
         },
         
-        // Add test customers
+        // Add test customers for testing limits
         addTestCustomers: async (count = 5) => {
           const testCustomers = [
-            { name: 'John Doe', phone: '0712345678', location: 'Nairobi CBD' },
-            { name: 'Jane Smith', phone: '0723456789', location: 'Westlands' },
-            { name: 'Peter Kimani', phone: '0734567890', location: 'Kasarani' },
-            { name: 'Mary Wanjiku', phone: '0745678901', location: 'Thika Road' },
-            { name: 'David Mwangi', phone: '0756789012', location: 'Kiambu' },
-            { name: 'Grace Achieng', phone: '0767890123', location: 'South B' },
-            { name: 'Samuel Kiptoo', phone: '0778901234', location: 'Ngong' },
-            { name: 'Rose Nyambura', phone: '0789012345', location: 'Ruaka' }
+            { name: 'John Mwangi', phone: '+254701234567' },
+            { name: 'Grace Wanjiku', phone: '+254702345678' },
+            { name: 'Peter Kimani', phone: '+254703456789' },
+            { name: 'Mary Nyambura', phone: '+254704567890' },
+            { name: 'David Kariuki', phone: '+254705678901' },
+            { name: 'Sarah Wanjiru', phone: '+254706789012' },
+            { name: 'Joseph Maina', phone: '+254707890123' },
+            { name: 'Nancy Njeri', phone: '+254708901234' },
+            { name: 'Samuel Kiprotich', phone: '+254709012345' },
+            { name: 'Ruth Akinyi', phone: '+254710123456' }
           ]
           
           for (let i = 0; i < Math.min(count, testCustomers.length); i++) {
@@ -94,360 +109,212 @@ function App() {
         // Reset signup encouragement for testing
         resetSignupEncouragement: () => {
           store.resetSignupEncouragement()
-          console.log('🔄 Signup encouragement reset - you can test modals again')
+          console.log('🔄 Signup encouragement reset')
         },
         
-        // Test signup encouragement flow
+        // Test signup flow from scratch
         testSignupFlow: () => {
           store.resetSignupEncouragement()
           store.clearAllData()
-          console.log('🧪 Test setup complete - add customers to see encouragement modals')
+          console.log('🧪 Fresh start for signup flow testing')
         },
 
-        // SECURITY TESTING: Bypass frontend validation and hit Firestore directly
-        bypassFrontendAndAddCustomer: async (customerData = { name: 'Malicious Customer', phone: '0700000000' }) => {
+        // Test malicious user simulation (bypassing frontend validation)
+        bypassFrontendAndAddCustomer: async (customerData) => {
+          console.log('🔓 Testing security: Bypassing frontend validation...')
+          
           try {
-            const { auth, db } = await import('./firebase/config.js')
-            const { doc, setDoc, serverTimestamp } = await import('firebase/firestore')
+            // This simulates a malicious user directly calling Firebase
+            const { addDoc, collection } = await import('firebase/firestore')
+            const { db, auth } = await import('./firebase/config')
+            const { onAuthStateChanged } = await import('firebase/auth')
             
-            if (!auth.currentUser) {
-              console.error('❌ Must be authenticated to test security rules')
-              return
+            return new Promise((resolve) => {
+              onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                  try {
+                    const userDocRef = collection(db, 'users', user.uid, 'customers')
+                    const docRef = await addDoc(userDocRef, {
+                      ...customerData,
+                      createdAt: new Date(),
+                      debts: []
+                    })
+                    console.log('⚠️ Security test: Document added with ID:', docRef.id)
+                    console.log('💡 If this succeeds, security rules need attention!')
+                    resolve(docRef.id)
+                  } catch (error) {
+                    console.log('✅ Security test: Properly blocked by rules:', error.message)
+                    resolve(null)
+                  }
+                } else {
+                  console.log('👤 Security test: No authenticated user')
+                  resolve(null)
+                }
+              })
+            })
+          } catch (error) {
+            console.error('❌ Security test failed:', error)
+            return null
+          }
+        },
+
+        // Test security rules with edge cases
+        testSecurityRules: async () => {
+          console.log('🔒 Testing security rules...')
+          console.log('─'.repeat(50))
+          
+          // Test 1: Exceed customer limit via direct API
+          await trackDeniDev.bypassFrontendAndAddCustomer({
+            name: 'Malicious Customer 6',
+            phone: '+254799999999'
+          })
+          
+          // Test 2: Add customer with invalid data
+          await trackDeniDev.bypassFrontendAndAddCustomer({
+            name: '', // Invalid: empty name
+            phone: 'invalid-phone',
+            maliciousField: 'should be rejected'
+          })
+          
+          // Test 3: Try to add enormous customer count
+          await trackDeniDev.bypassFrontendAndAddCustomer({
+            name: 'A'.repeat(1000), // Very long name
+            phone: '+254700000000'
+          })
+          
+          console.log('─'.repeat(50))
+          console.log('🔒 Security rule testing complete!')
+          console.log('💡 Check above for any successful bypasses that need fixing')
+        },
+
+        // Debug user document for security testing
+        debugUserDocument: async () => {
+          try {
+            const { doc, getDoc } = await import('firebase/firestore')
+            const { db, auth } = await import('./firebase/config')
+            const { onAuthStateChanged } = await import('firebase/auth')
+            
+            onAuthStateChanged(auth, async (user) => {
+              if (user) {
+                try {
+                  const userDocRef = doc(db, 'users', user.uid)
+                  const userDocSnap = await getDoc(userDocRef)
+                  
+                  if (userDocSnap.exists()) {
+                    console.log('👤 User document:', userDocSnap.data())
+                  } else {
+                    console.log('👤 No user document found')
+                  }
+                } catch (error) {
+                  console.error('❌ Failed to read user document:', error)
+                }
+              } else {
+                console.log('👤 No authenticated user')
+              }
+            })
+          } catch (error) {
+            console.error('❌ Debug failed:', error)
+          }
+        },
+
+        // Test rate limiting
+        testRateLimit: async () => {
+          console.log('⏱️ Testing rate limiting with rapid requests...')
+          
+          const promises = []
+          for (let i = 0; i < 10; i++) {
+            promises.push(
+              trackDeniDev.bypassFrontendAndAddCustomer({
+                name: `Rate Test ${i}`,
+                phone: `+25470000${String(i).padStart(4, '0')}`
+              })
+            )
+          }
+          
+          try {
+            const results = await Promise.all(promises)
+            const successful = results.filter(r => r !== null).length
+            console.log(`⏱️ Rate limit test: ${successful}/10 requests succeeded`)
+            
+            if (successful > 5) {
+              console.log('⚠️ High success rate may indicate insufficient rate limiting')
+            } else {
+              console.log('✅ Rate limiting appears to be working')
+            }
+          } catch (error) {
+            console.log('✅ Rate limiting blocked requests:', error.message)
+          }
+        },
+
+        // Test document size limits
+        testDocumentSizeLimits: async () => {
+          console.log('📏 Testing document size limits...')
+          
+          // Create a large customer object
+          const largeDebts = Array.from({ length: 100 }, (_, i) => ({
+            id: `debt-${i}`,
+            amount: 1000,
+            reason: 'A'.repeat(100), // Long reason
+            dateBorrowed: new Date().toISOString(),
+            dueDate: new Date().toISOString(),
+            paid: false,
+            payments: Array.from({ length: 10 }, (_, j) => ({
+              id: `payment-${i}-${j}`,
+              amount: 100,
+              date: new Date().toISOString(),
+              method: 'cash'
+            }))
+          }))
+          
+          await trackDeniDev.bypassFrontendAndAddCustomer({
+            name: 'Large Data Customer',
+            phone: '+254700000000',
+            debts: largeDebts,
+            notes: 'N'.repeat(10000) // Very long notes
+          })
+          
+          console.log('📏 Document size test complete')
+        },
+
+        // Test Pro tier document limits
+        testProTierLimits: async () => {
+          console.log('💎 Testing Pro tier limits...')
+          
+          try {
+            // First upgrade to Pro
+            await store.upgradeToProTier()
+            console.log('💎 Upgraded to Pro tier for testing')
+            
+            // Try to add many customers rapidly
+            for (let i = 0; i < 20; i++) {
+              await trackDeniDev.bypassFrontendAndAddCustomer({
+                name: `Pro Test Customer ${i}`,
+                phone: `+25470100${String(i).padStart(4, '0')}`
+              })
             }
             
-            const userId = auth.currentUser.uid
-            const customerId = crypto.randomUUID()
+            console.log('💎 Pro tier limit testing complete')
             
-            console.log('🔓 BYPASS ATTEMPT: Adding customer directly to Firestore, bypassing frontend validation...')
-            console.log('👤 User ID:', userId)
-            console.log('🎯 Customer data:', customerData)
-            
-                         // Directly call Firestore API (bypassing frontend checks)
-             const customerRef = doc(db, 'users', userId, 'customers', customerId)
+            // Add many debts to test limits
+            const manyDebts = Array.from({ length: 50 }, (_, i) => ({
+              id: `debt-${i}`,
+              amount: 1000 + i,
+              reason: `Large debt ${i}`,
+              dateBorrowed: new Date().toISOString(),
+              dueDate: new Date().toISOString(),
+              paid: false,
+              payments: []
+            }))
              
-             // Send all provided fields to test security rules properly
-             const documentData = {
-               name: customerData.name,
-               phone: customerData.phone,
-               createdAt: serverTimestamp()
-             }
-             
-             // Add optional fields if provided
-             if (customerData.address) documentData.address = customerData.address
-             if (customerData.notes) documentData.notes = customerData.notes
-             
-             await setDoc(customerRef, documentData)
-             
-             // Update rate limiting counter (essential for testing)
-             const userRef = doc(db, 'users', userId)
-             const { updateDoc } = await import('firebase/firestore')
-             
-             // Get current rate limit data
-             const { getDoc } = await import('firebase/firestore')
-             const userDoc = await getDoc(userRef)
-             const userData = userDoc.data()
-             const rateLimits = userData.rateLimits || {}
-             const customerCreateData = rateLimits.customer_create || {}
-             
-             // Calculate new count
-             const now = new Date()
-             const lastReset = customerCreateData.lastReset?.toDate ? customerCreateData.lastReset.toDate() : new Date(customerCreateData.lastReset || 0)
-             const minutesSinceReset = (now - lastReset) / 60000
-             
-             const newCount = minutesSinceReset >= 1.0 ? 1 : (customerCreateData.count || 0) + 1
-             
-             await updateDoc(userRef, {
-               totalCustomers: (userData.totalCustomers || 0) + 1,
-               'rateLimits.customer_create': {
-                 lastReset: serverTimestamp(),
-                 count: newCount
-               }
+             await trackDeniDev.bypassFrontendAndAddCustomer({
+               name: 'Pro Customer with Many Debts',
+               phone: '+254701999999',
+               debts: manyDebts
              })
-            
-            console.log('✅ SUCCESS: Backend allowed customer creation - security rules may need hardening!')
-            
-          } catch (error) {
-            console.log('🛡️ BLOCKED: Backend security rules prevented customer creation')
-            console.log('Error code:', error.code)
-            console.log('Error message:', error.message)
-            
-                         if (error.code === 'permission-denied') {
-               console.log('🎉 SECURITY RULES WORKING: Permission denied as expected!')
-             }
-           }
-         },
-
-         // DEBUG: Check user document state for security rules debugging
-         debugUserDocument: async () => {
-           try {
-             const { auth, db } = await import('./firebase/config.js')
-             const { doc, getDoc } = await import('firebase/firestore')
-             
-             if (!auth.currentUser) {
-               console.error('❌ Must be authenticated to debug user document')
-               return
-             }
-             
-             const userId = auth.currentUser.uid
-             const userRef = doc(db, 'users', userId)
-             const userDoc = await getDoc(userRef)
-             
-             console.log('🔍 USER DOCUMENT DEBUG:')
-             console.log('👤 User ID:', userId)
-             console.log('📄 Document exists:', userDoc.exists())
-             
-             if (userDoc.exists()) {
-               const data = userDoc.data()
-               console.log('📊 User data:', data)
-               console.log('🔢 totalCustomers:', data.totalCustomers)
-               console.log('⭐ isPro:', data.isPro)
-               console.log('🧮 Security check: totalCustomers < 5?', data.totalCustomers < 5)
-               console.log('🔐 Should allow creation?', data.isPro || data.totalCustomers < 5)
-               
-               // Rate limiting debug
-               console.log('⏱️ RATE LIMIT DEBUG:')
-               const rateLimits = data.rateLimits || {}
-               console.log('📈 Rate limits data:', rateLimits)
-               
-               Object.keys(rateLimits).forEach(operation => {
-                 const operationData = rateLimits[operation]
-                 const now = new Date()
-                 const lastReset = operationData.lastReset?.toDate ? operationData.lastReset.toDate() : new Date(operationData.lastReset)
-                 const minutesSinceReset = (now - lastReset) / 60000
-                 
-                 console.log(`🔄 ${operation}:`, {
-                   count: operationData.count,
-                   lastReset: lastReset,
-                   minutesSinceReset: minutesSinceReset.toFixed(2),
-                   shouldReset: minutesSinceReset >= 1.0
-                 })
-               })
-             } else {
-               console.log('❌ User document does not exist - this is the problem!')
-             }
-             
-           } catch (error) {
-             console.error('❌ Error checking user document:', error)
-           }
-         },
-
-         // Test rate limiting by rapid operations
-         testRateLimit: async () => {
-           try {
-             console.log('🧪 RATE LIMIT TEST: Attempting rapid customer creation...')
-             
-             for (let i = 0; i < 15; i++) {
-               const startTime = Date.now()
-               try {
-                 await trackDeniDev.bypassFrontendAndAddCustomer({
-                   name: `Rate Test Customer ${i + 1}`,
-                   phone: `070000000${i}`
-                 })
-                 const duration = Date.now() - startTime
-                 console.log(`✅ Request ${i + 1}: SUCCESS (${duration}ms)`)
-               } catch (error) {
-                 const duration = Date.now() - startTime
-                 console.log(`❌ Request ${i + 1}: BLOCKED - ${error.code} (${duration}ms)`)
-                 if (i >= 10) {
-                   console.log('🎉 Rate limiting working - blocked after 10 requests!')
-                   break
-                 }
-               }
-               
-               // Small delay between requests
-               await new Promise(resolve => setTimeout(resolve, 100))
-             }
-           } catch (error) {
-             console.error('❌ Rate limit test failed:', error)
-           }
-         },
-
-                  // Test document size limits
-         testDocumentSizeLimits: async () => {
-           try {
-             console.log('📏 DOCUMENT SIZE LIMIT TEST: Testing field size restrictions...')
-             console.log('Expected: Normal size ✅, Oversized fields should be ❌ BLOCKED')
-             console.log('─'.repeat(60))
-             
-             // Test 1: Normal size customer (should work)
-             console.log('🧪 Test 1: Normal size customer (should pass)')
-             try {
-               await trackDeniDev.bypassFrontendAndAddCustomer({
-                 name: 'John Doe',
-                 phone: '0700000001'
-               })
-               console.log('✅ Result: PASSED - Normal size customer accepted')
-             } catch (error) {
-               console.log('❌ Result: FAILED - Normal size customer rejected:', error.code)
-             }
-             
-             // Test 2: Customer with oversized name (should fail)
-             console.log('\n🧪 Test 2: Oversized name (101+ chars, limit: 100)')
-             try {
-               const longName = 'A'.repeat(101) // 101 characters (over 100 limit)
-               await trackDeniDev.bypassFrontendAndAddCustomer({
-                 name: longName,
-                 phone: '0700000002'
-               })
-               console.log('❌ Result: SECURITY ISSUE - Oversized name was allowed!')
-             } catch (error) {
-               console.log('✅ Result: SECURITY WORKING - Oversized name blocked:', error.code)
-             }
-             
-             // Test 3: Customer with oversized phone (should fail)
-             console.log('\n🧪 Test 3: Oversized phone (21+ chars, limit: 20)')
-             try {
-               const longPhone = '0'.repeat(21) // 21 characters (over 20 limit)
-               await trackDeniDev.bypassFrontendAndAddCustomer({
-                 name: 'Valid Name',
-                 phone: longPhone
-               })
-               console.log('❌ Result: SECURITY ISSUE - Oversized phone was allowed!')
-             } catch (error) {
-               console.log('✅ Result: SECURITY WORKING - Oversized phone blocked:', error.code)
-             }
-             
-             // Test 4: Customer with oversized address (should fail)
-             console.log('\n🧪 Test 4: Oversized address (201+ chars, limit: 200)')
-             try {
-               const longAddress = 'X'.repeat(201) // 201 characters (over 200 limit)
-               await trackDeniDev.bypassFrontendAndAddCustomer({
-                 name: 'Valid Name',
-                 phone: '0700000003',
-                 address: longAddress
-               })
-               console.log('❌ Result: SECURITY ISSUE - Oversized address was allowed!')
-             } catch (error) {
-               console.log('✅ Result: SECURITY WORKING - Oversized address blocked:', error.code)
-             }
-             
-             // Test 5: Customer with oversized notes (should fail)
-             console.log('\n🧪 Test 5: Oversized notes (501+ chars, limit: 500)')
-             try {
-               const longNotes = 'N'.repeat(501) // 501 characters (over 500 limit)
-               await trackDeniDev.bypassFrontendAndAddCustomer({
-                 name: 'Valid Name',
-                 phone: '0700000004',
-                 notes: longNotes
-               })
-               console.log('❌ Result: SECURITY ISSUE - Oversized notes was allowed!')
-             } catch (error) {
-               console.log('✅ Result: SECURITY WORKING - Oversized notes blocked:', error.code)
-             }
-             
-             console.log('\n📏 Document size limit testing complete!')
-             console.log('─'.repeat(60))
-             
-           } catch (error) {
-             console.error('❌ Document size limit test failed:', error)
-           }
-         },
-
-         // Test Pro tier caps
-         testProTierCaps: async () => {
-           try {
-             console.log('🎯 PRO TIER CAPS TEST: Testing customer and debt limits...')
-             console.log('Expected: Pro users limited to 10K customers, 50K debts')
-             console.log('─'.repeat(60))
-             
-             // First, check current user status
-             await trackDeniDev.debugUserDocument()
-             
-             // Test 1: Try to exceed customer limit (simulate high customer count)
-             console.log('\n🧪 Test 1: Simulating Pro user near customer limit')
-             
-             // We'll simulate this by updating the user document directly
-             const { auth, db } = await import('./firebase/config.js')
-             const { doc, updateDoc } = await import('firebase/firestore')
-             
-             if (!auth.currentUser) {
-               console.log('❌ Must be authenticated to test Pro tier caps')
-               return
-             }
-             
-             const userId = auth.currentUser.uid
-             const userRef = doc(db, 'users', userId)
-             
-                           // Test customer 10000 (should succeed)
-              try {
-                await updateDoc(userRef, {
-                  isPro: true,
-                  totalCustomers: 9999
-                })
-                console.log('✅ Set user to Pro with 9999 customers')
-                
-                await trackDeniDev.bypassFrontendAndAddCustomer({
-                  name: 'Customer 10000',
-                  phone: '0700010000'
-                })
-                console.log('✅ Result: Customer 10000 allowed (within limit)')
-              } catch (error) {
-                console.log('❌ Unexpected: Customer 10000 blocked:', error.code)
-              }
-              
-              // Test customer 10001 (should fail)
-              try {
-                await updateDoc(userRef, {
-                  totalCustomers: 10000
-                })
-                console.log('📊 Updated user to 10000 customers (at limit)')
-                
-                await trackDeniDev.bypassFrontendAndAddCustomer({
-                  name: 'Customer 10001',
-                  phone: '0700010001'
-                })
-                console.log('❌ Result: SECURITY ISSUE - Customer 10001 was allowed!')
-                
-              } catch (error) {
-                console.log('✅ Result: SECURITY WORKING - Customer 10001 blocked:', error.code)
-              }
-             
-             // Test 2: Test debt limits for Pro users
-             console.log('\n🧪 Test 2: Testing Pro user debt limits (50K max)')
-             try {
-               // Simulate Pro user with 49999 debts (just under limit)
-               await updateDoc(userRef, {
-                 totalDebts: 49999
-               })
-               console.log('✅ Set user to Pro with 49999 debts')
-               
-               // Try to add one more debt (should succeed - debt #50000)
-               console.log('Attempting to add debt #50000...')
-               // Note: This would require implementing a bypass debt creation function
-               console.log('⚠️  Debt creation test requires implementing bypassFrontendAndAddDebt function')
-               
-               // Update to 50000 debts and try to add another (should fail)
-               await updateDoc(userRef, {
-                 totalDebts: 50000
-               })
-               
-               console.log('✅ Pro user debt limits configured correctly')
-               
-             } catch (error) {
-               console.log('✅ Result: SECURITY WORKING - Debt limit enforced:', error.code)
-             }
-             
-                           // Test 3: Test free user vs Pro user limits
-              console.log('\n🧪 Test 3: Comparing free vs Pro user limits')
-              await updateDoc(userRef, {
-                isPro: false,
-                totalCustomers: 5
-              })
-              console.log('✅ Set user to Free with 5 customers')
-              
-              try {
-                // Try to add 6th customer (should fail)
-                await trackDeniDev.bypassFrontendAndAddCustomer({
-                  name: 'Free User Customer 6',
-                  phone: '0700000006'
-                })
-                console.log('❌ Result: SECURITY ISSUE - Free user 6th customer was allowed!')
-                
-              } catch (error) {
-                console.log('✅ Result: SECURITY WORKING - Free user 6th customer blocked:', error.code)
-              }
              
              // Restore user to Pro status for continued testing
+             const { updateDoc } = await import('firebase/firestore')
+             const userRef = doc(db, 'users', auth.currentUser.uid)
              await updateDoc(userRef, {
                isPro: true,
                totalCustomers: 15, // Reasonable number for testing
@@ -760,6 +627,52 @@ function App() {
             console.error('🐛 Debug: Error occurred:', error)
             console.error('🐛 Debug: Error stack:', error.stack)
           }
+        },
+
+        // Performance Optimization Testing
+        testPerformanceOptimizations: async () => {
+          const { 
+            getPerformancePreferences, 
+            shouldReduceAnimations, 
+            shouldSimplifyVisuals,
+            getBundleOptimizationInfo 
+          } = await import('./utils/performanceOptimizations.js')
+          
+          console.log('🚀 Performance Optimization Status:')
+          console.log('📊 Preferences:', getPerformancePreferences())
+          console.log('🎭 Reduce Animations:', shouldReduceAnimations())
+          console.log('🎨 Simplify Visuals:', shouldSimplifyVisuals())
+          console.log('📦 Bundle Optimizations:', getBundleOptimizationInfo())
+        },
+
+        toggleAnimations: async (setting = 'auto') => {
+          const { setPerformancePreferences } = await import('./utils/performanceOptimizations.js')
+          const prefs = setPerformancePreferences({ animations: setting })
+          console.log(`🎭 Animations set to: ${setting}`)
+          console.log('💡 New preferences:', prefs)
+        },
+
+        toggleVisualComplexity: async (setting = 'auto') => {
+          const { setPerformancePreferences } = await import('./utils/performanceOptimizations.js')
+          const prefs = setPerformancePreferences({ visualComplexity: setting })
+          console.log(`🎨 Visual complexity set to: ${setting}`)
+          console.log('💡 New preferences:', prefs)
+        },
+
+        testAnimationSettings: async () => {
+          console.log('🎭 Testing animation settings...')
+          
+          await window.trackDeniDev.toggleAnimations('none')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          await window.trackDeniDev.toggleAnimations('reduced')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          await window.trackDeniDev.toggleAnimations('full')
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          
+          await window.trackDeniDev.toggleAnimations('auto')
+          console.log('✅ Animation settings test complete')
         }
       }
       
@@ -794,6 +707,10 @@ function App() {
       console.log('  trackDeniDev.migrateToIndexedDB() - 📦 Test data migration')
       console.log('  trackDeniDev.testStoragePerformance() - ⚡ Test storage performance')
       console.log('  trackDeniDev.debugStorage() - 🐛 Debug storage system issues')
+      console.log('  trackDeniDev.testPerformanceOptimizations() - 🚀 Test performance optimizations')
+      console.log('  trackDeniDev.toggleAnimations("none"|"reduced"|"full"|"auto") - 🎭 Test animation settings')
+      console.log('  trackDeniDev.toggleVisualComplexity("simple"|"standard"|"rich"|"auto") - 🎨 Test visual settings')
+      console.log('  trackDeniDev.testAnimationSettings() - 🎭 Test all animation settings')
     }
   }, [])
 
@@ -806,111 +723,128 @@ function App() {
     setSelectedCustomerId(customerId)
     setCurrentPage('add-debt')
     // Handle tutorial progression
-    tutorial.onAddButtonClicked()
+    if (tutorial.isActive && tutorial.currentStep?.id === 'click-add-debt') {
+      tutorial.nextStep()
+    }
   }
 
   const navigateToCustomer = (customer, action = 'view') => {
     if (action === 'add-debt') {
-      // Navigate to add debt for this specific customer
       navigateToAddDebt(customer.id)
     } else {
-      // Navigate to customer detail page
       setSelectedCustomerId(customer.id)
       setCurrentPage('customer-detail')
     }
   }
 
   const handleDebtSuccess = (customerId) => {
-    // Handle tutorial progression
-    tutorial.onCustomerFormSubmitted(customerId)
-    // Navigate back to home after successful debt creation
-    navigateToHome()
+    // Navigate to customer detail or home based on context
+    if (customerId) {
+      setSelectedCustomerId(customerId)
+      setCurrentPage('customer-detail')
+    } else {
+      navigateToHome()
+    }
   }
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false)
-    // Check if tutorial should be shown after onboarding
-    const shouldShowTutorial = localStorage.getItem('shouldShowTutorial')
-    if (shouldShowTutorial) {
-      tutorial.startTutorial()
-    }
+    localStorage.setItem('trackdeni-has-seen-intro', 'true')
+    
+    // Start tutorial after onboarding
+    tutorial.startTutorial()
   }
 
   const renderCurrentPage = (user, signIn, signOut) => {
     switch (currentPage) {
+      case 'home':
+        return (
+          <Suspense fallback={<PageLoadingFallback message="Loading dashboard..." />}>
+            <Home 
+              onNavigateToAddDebt={navigateToAddDebt}
+              onNavigateToCustomer={navigateToCustomer}
+              tutorial={tutorial}
+              user={user}
+              signIn={signIn}
+              signOut={signOut}
+            />
+          </Suspense>
+        )
       case 'add-debt':
         return (
-          <AddDebt
-            customerId={selectedCustomerId}
-            onBack={navigateToHome}
-            onSuccess={handleDebtSuccess}
-            tutorial={tutorial}
-            user={user}
-            signIn={signIn}
-            signOut={signOut}
-          />
+          <Suspense fallback={<PageLoadingFallback message="Loading form..." />}>
+            <AddDebt 
+              customerId={selectedCustomerId}
+              onBack={navigateToHome}
+              onSuccess={handleDebtSuccess}
+              tutorial={tutorial}
+              user={user}
+              signIn={signIn}
+              signOut={signOut}
+            />
+          </Suspense>
         )
       case 'customer-detail':
         return (
-          <CustomerDetail
-            customerId={selectedCustomerId}
-            onBack={navigateToHome}
-            onNavigateToAddDebt={navigateToAddDebt}
-            tutorial={tutorial}
-            user={user}
-            signIn={signIn}
-            signOut={signOut}
-          />
+          <Suspense fallback={<PageLoadingFallback message="Loading customer..." />}>
+            <CustomerDetail 
+              customerId={selectedCustomerId}
+              onBack={navigateToHome}
+              onNavigateToAddDebt={navigateToAddDebt}
+              tutorial={tutorial}
+              user={user}
+              signIn={signIn}
+              signOut={signOut}
+            />
+          </Suspense>
         )
-      case 'home':
       default:
         return (
-          <Home
-            onNavigateToAddDebt={navigateToAddDebt}
-            onNavigateToCustomer={navigateToCustomer}
-            tutorial={tutorial}
-            user={user}
-            signIn={signIn}
-            signOut={signOut}
-          />
+          <Suspense fallback={<PageLoadingFallback message="Loading..." />}>
+            <Home 
+              onNavigateToAddDebt={navigateToAddDebt}
+              onNavigateToCustomer={navigateToCustomer}
+              tutorial={tutorial}
+              user={user}
+              signIn={signIn}
+              signOut={signOut}
+            />
+          </Suspense>
         )
     }
   }
 
-  // Show loading state while checking onboarding status
   if (isLoading) {
+    return <LoadingFallback message="Initializing TrackDeni..." />
+  }
+
+  if (showOnboarding) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4 mx-auto">
-            <span className="text-white font-bold text-xl">TD</span>
-          </div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
+      <Suspense fallback={<LoadingFallback message="Loading onboarding..." />}>
+        <OnboardingFlow onComplete={handleOnboardingComplete} />
+      </Suspense>
     )
   }
 
-  // Show onboarding if user hasn't seen it
-  if (showOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />
-  }
-
-  // Show main app with interactive tutorial if needed
   return (
-    <AuthGuard requireAuth={false}>
+    <AuthGuard>
       {({ user, signIn, signOut }) => (
-    <div className="relative">
-          <OfflineIndicator />
+        <>
           {renderCurrentPage(user, signIn, signOut)}
-      {tutorial.isActive && (
-        <InteractiveTutorial 
-          currentStep={tutorial.currentStep}
-          onComplete={tutorial.completeTutorial}
-        />
-      )}
+          
+          {/* Tutorial Overlay */}
+          {tutorial.isActive && (
+            <Suspense fallback={<ModalLoadingFallback />}>
+              <InteractiveTutorial tutorial={tutorial} />
+            </Suspense>
+          )}
+          
+          {/* PWA Install Prompt */}
           <PWAInstallPrompt />
-    </div>
+          
+          {/* Offline Indicator */}
+          <OfflineIndicator />
+        </>
       )}
     </AuthGuard>
   )

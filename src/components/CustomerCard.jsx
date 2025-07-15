@@ -1,16 +1,20 @@
-import { useState } from 'react'
+import { useState, memo, useMemo, useCallback } from 'react'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
 import PaymentModal from './PaymentModal'
 
-const CustomerCard = ({ customer, onClick, tutorial }) => {
+const CustomerCard = memo(({ customer, onClick, tutorial }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const { getCustomerDebtSummary } = useDebtStore()
-  const summary = getCustomerDebtSummary(customer.id)
+  
+  // Memoize expensive calculations
+  const summary = useMemo(() => {
+    return getCustomerDebtSummary(customer.id)
+  }, [customer.id, customer.debts, getCustomerDebtSummary])
   
   // Get the most urgent debt for status display
-  const getMostUrgentDebt = () => {
+  const urgentDebt = useMemo(() => {
     const activeDebts = customer.debts.filter(debt => !debt.paid)
     if (activeDebts.length === 0) return null
     
@@ -25,13 +29,19 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
       
       return mostUrgent
     }, null)
-  }
+  }, [customer.debts])
 
-  const urgentDebt = getMostUrgentDebt()
-  const status = urgentDebt ? getDebtStatus(urgentDebt.dueDate, urgentDebt.paid) : 'paid'
-  const statusColor = getStatusColor(status)
+  // Memoize status calculations
+  const status = useMemo(() => {
+    return urgentDebt ? getDebtStatus(urgentDebt.dueDate, urgentDebt.paid) : 'paid'
+  }, [urgentDebt])
+  
+  const statusColor = useMemo(() => {
+    return getStatusColor(status)
+  }, [status])
 
-  const handleSendSMS = (e) => {
+  // Memoize event handlers to prevent unnecessary re-renders
+  const handleSendSMS = useCallback((e) => {
     e.stopPropagation() // Prevent card click
     
     if (!customer.phone) {
@@ -46,23 +56,40 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
     const encodedMessage = encodeURIComponent(message)
     const smsUrl = `sms:${customer.phone}?body=${encodedMessage}`
     window.open(smsUrl)
-  }
+  }, [customer.phone, customer.name, urgentDebt])
 
-  const handleRecordPayment = (e) => {
+  const handleRecordPayment = useCallback((e) => {
     e.stopPropagation() // Prevent card click
     
     if (urgentDebt) {
       setSelectedDebt(urgentDebt)
       setShowPaymentModal(true)
     }
-  }
+  }, [urgentDebt])
+
+  const handleCardClick = useCallback(() => {
+    onClick && onClick(customer)
+  }, [onClick, customer])
+
+  const handleAddDebt = useCallback((e) => {
+    e.stopPropagation()
+    // Navigate to add debt for this customer
+    if (onClick) {
+      onClick(customer, 'add-debt')
+    }
+  }, [onClick, customer])
+
+  const handleClosePaymentModal = useCallback(() => {
+    setShowPaymentModal(false)
+    setSelectedDebt(null)
+  }, [])
 
   return (
     <div className="card hover:shadow-lg transition-shadow">
       {/* Header with name and status - Clickable area */}
       <div 
         className="flex items-start justify-between mb-3 cursor-pointer rounded-lg p-2 -m-2 hover:bg-gray-50 transition-colors"
-        onClick={() => onClick && onClick(customer)}
+        onClick={handleCardClick}
       >
         <div className="flex-1">
           <h3 className="font-semibold text-lg text-text mb-1">{customer.name}</h3>
@@ -136,13 +163,7 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
           SMS
         </button>
         <button
-          onClick={(e) => {
-            e.stopPropagation()
-            // Navigate to add debt for this customer
-            if (onClick) {
-              onClick(customer, 'add-debt')
-            }
-          }}
+          onClick={handleAddDebt}
           className="bg-gray-100 text-gray-700 py-2 px-2 rounded-lg font-medium text-xs hover:bg-gray-200 transition-colors"
         >
           Add
@@ -154,14 +175,14 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
         customer={customer}
         debt={selectedDebt}
         isOpen={showPaymentModal}
-        onClose={() => {
-          setShowPaymentModal(false)
-          setSelectedDebt(null)
-        }}
+        onClose={handleClosePaymentModal}
         tutorial={tutorial}
       />
     </div>
   )
-}
+})
+
+// Set display name for debugging
+CustomerCard.displayName = 'CustomerCard'
 
 export default CustomerCard 
