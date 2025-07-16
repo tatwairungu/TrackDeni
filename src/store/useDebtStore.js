@@ -371,21 +371,53 @@ const useDebtStore = create(
 
       markDebtAsPaid: async (customerId, debtId) => {
         // Update local state first
-        set((state) => ({
-          customers: state.customers.map(customer => 
-            customer.id === customerId 
-              ? {
-                  ...customer,
-                  debts: customer.debts.map(debt => 
-                    debt.id === debtId 
-                      ? { ...debt, paid: true }
-                      : debt
-                  )
-                }
-              : customer
-          ),
-          error: null
-        }))
+        set((state) => {
+          const customer = state.customers.find(c => c.id === customerId)
+          if (!customer) return state
+
+          const debt = customer.debts.find(d => d.id === debtId)
+          if (!debt) return state
+
+          // Calculate remaining amount to pay
+          const totalPaid = getTotalPaid(debt.payments)
+          const remainingAmount = parseMonetaryAmount(Math.max(0, debt.amount - totalPaid))
+
+          // Always create payment record for remaining amount if debt isn't already fully paid
+          // This ensures consistent state between paid flag and payment records
+          const finalPayment = remainingAmount > 0 ? {
+            amount: remainingAmount,
+            date: new Date().toISOString(),
+            source: 'mark_as_paid'
+          } : null
+
+          console.log(`🔧 Marking debt as paid: ${debt.reason}`, {
+            originalAmount: debt.amount,
+            totalPaid,
+            remainingAmount,
+            willCreatePayment: !!finalPayment
+          })
+
+          return {
+            ...state,
+            customers: state.customers.map(customer => 
+              customer.id === customerId 
+                ? {
+                    ...customer,
+                    debts: customer.debts.map(debt => 
+                      debt.id === debtId 
+                        ? { 
+                            ...debt, 
+                            paid: true,
+                            payments: finalPayment ? [...debt.payments, finalPayment] : debt.payments
+                          }
+                        : debt
+                    )
+                  }
+                : customer
+            ),
+            error: null
+          }
+        })
 
         // If user is authenticated, sync to Firestore
         try {
@@ -393,19 +425,39 @@ const useDebtStore = create(
           
           if (auth.currentUser) {
             const { db } = await import('../firebase/config.js')
-            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+            const { doc, updateDoc, serverTimestamp, getDoc } = await import('firebase/firestore')
             
             const userId = auth.currentUser.uid
             
-            // Update debt status in Firestore
+            // Get current debt from Firestore to calculate remaining amount
             const debtRef = doc(db, 'users', userId, 'debts', debtId)
-            await updateDoc(debtRef, {
-              paid: true,
-              status: 'paid',
-              updatedAt: serverTimestamp()
-            })
+            const debtDoc = await getDoc(debtRef)
             
-            console.log('✅ Debt status synced to Firestore successfully')
+            if (debtDoc.exists()) {
+              const currentDebt = debtDoc.data()
+              const currentPayments = currentDebt.payments || []
+              const totalPaid = currentPayments.reduce((sum, p) => sum + p.amount, 0)
+              const remainingAmount = Math.max(0, currentDebt.amount - totalPaid)
+              
+              // Create final payment record if there's a remaining amount
+              const updatedPayments = remainingAmount > 0 
+                ? [...currentPayments, {
+                    amount: remainingAmount,
+                    date: serverTimestamp(),
+                    source: 'mark_as_paid'
+                  }]
+                : currentPayments
+              
+              // Update debt in Firestore
+              await updateDoc(debtRef, {
+                payments: updatedPayments,
+                paid: true,
+                status: 'paid',
+                updatedAt: serverTimestamp()
+              })
+              
+              console.log('✅ Debt marked as paid and synced to Firestore successfully')
+            }
           }
         } catch (error) {
           console.error('❌ Failed to sync debt status to Firestore:', error)
@@ -452,7 +504,8 @@ const useDebtStore = create(
         const state = get()
         return state.customers.reduce((total, customer) => {
           return total + customer.debts.reduce((customerTotal, debt) => {
-            // Only count actual customer payments, not auto-clearing redistributions
+            // Count all payments except auto-clearing redistributions
+            // This should include mark_as_paid payments since they are actual payments
             const actualCustomerPayments = debt.payments
               .filter(p => p.source !== 'overpayment_auto_clear')
               .reduce((sum, p) => sum + p.amount, 0)
@@ -468,7 +521,8 @@ const useDebtStore = create(
 
         const summary = customer.debts.reduce((acc, debt) => {
           const totalPaid = getTotalPaid(debt.payments)
-          // Only count actual customer payments, not auto-clearing redistributions
+          // Count all payments except auto-clearing redistributions
+          // This should include mark_as_paid payments since they are actual payments
           const actualCustomerPayments = debt.payments
             .filter(p => p.source !== 'overpayment_auto_clear')
             .reduce((sum, p) => sum + p.amount, 0)
@@ -481,6 +535,7 @@ const useDebtStore = create(
             const remaining = debt.amount - totalPaid
             acc.totalPaid += actualCustomerPayments // Only count actual payments
             
+            // Check if debt is truly active (not paid AND has remaining amount)
             if (!debt.paid && remaining > 0) {
               acc.totalOwed += remaining
               acc.activeDebts += 1
@@ -493,6 +548,57 @@ const useDebtStore = create(
         summary.netOwed = Math.max(0, summary.totalOwed - summary.storeCredit)
         
         return summary
+      },
+
+      // Force recalculation of overview totals and debug
+      debugOverviewTotals: () => {
+        const state = get()
+        
+        console.log('🔍 Debugging Overview Totals...')
+        console.log('─'.repeat(50))
+        
+        let globalOwed = 0
+        let globalPaid = 0
+        
+        state.customers.forEach(customer => {
+          console.log(`Customer: ${customer.name}`)
+          let customerOwed = 0
+          let customerPaid = 0
+          
+          customer.debts.forEach(debt => {
+            const totalPaid = getTotalPaid(debt.payments)
+            const actualCustomerPayments = debt.payments
+              .filter(p => p.source !== 'overpayment_auto_clear')
+              .reduce((sum, p) => sum + p.amount, 0)
+            
+            console.log(`  Debt: ${debt.reason}`)
+            console.log(`    Amount: ${debt.amount}, Paid Flag: ${debt.paid}`)
+            console.log(`    Total Paid: ${totalPaid}, Actual Payments: ${actualCustomerPayments}`)
+            
+            if (!debt.paid && debt.amount > 0) {
+              const remaining = Math.max(0, debt.amount - totalPaid)
+              customerOwed += remaining
+              console.log(`    Adding to owed: ${remaining}`)
+            }
+            
+            customerPaid += actualCustomerPayments
+            console.log(`    Adding to paid: ${actualCustomerPayments}`)
+          })
+          
+          console.log(`  Customer Total: Owed=${customerOwed}, Paid=${customerPaid}`)
+          globalOwed += customerOwed
+          globalPaid += customerPaid
+          console.log('─'.repeat(30))
+        })
+        
+        console.log(`📊 Global Totals:`)
+        console.log(`  Total Owed: ${globalOwed}`)
+        console.log(`  Total Paid: ${globalPaid}`)
+        console.log(`  Store getTotalOwed(): ${get().getTotalOwed()}`)
+        console.log(`  Store getTotalPaid(): ${get().getTotalPaid()}`)
+        console.log('─'.repeat(50))
+        
+        return { globalOwed, globalPaid }
       },
 
       // Free tier management
@@ -630,6 +736,16 @@ const useDebtStore = create(
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
       setLoading: (loading) => set({ isLoading: loading }),
+
+      // Force state update to trigger re-renders
+      forceUpdate: () => {
+        set((state) => ({
+          ...state,
+          // Add a timestamp to force re-render
+          lastUpdated: new Date().toISOString()
+        }))
+        console.log('🔄 Forced state update to trigger re-renders')
+      },
 
       // Clear all user data (for logout)
       clearUserData: () => {
@@ -902,6 +1018,83 @@ const useDebtStore = create(
           
           console.log('🔄 Real-time sync disabled')
         }
+      },
+
+      // Debug function to check debt status consistency
+      debugDebtStatus: (customerId) => {
+        const state = get()
+        const customer = state.customers.find(c => c.id === customerId)
+        if (!customer) {
+          console.log('❌ Customer not found:', customerId)
+          return
+        }
+
+        console.log('🔍 Debt Status Debug for:', customer.name)
+        console.log('─'.repeat(50))
+        
+        customer.debts.forEach(debt => {
+          const totalPaid = getTotalPaid(debt.payments)
+          const remaining = debt.amount - totalPaid
+          
+          console.log(`Debt: ${debt.reason}`)
+          console.log(`  Amount: KES ${debt.amount}`)
+          console.log(`  Paid Flag: ${debt.paid}`)
+          console.log(`  Total Paid: KES ${totalPaid}`)
+          console.log(`  Remaining: KES ${remaining}`)
+          console.log(`  Payments:`, debt.payments.map(p => ({
+            amount: p.amount,
+            source: p.source,
+            date: p.date
+          })))
+          console.log(`  Should be paid: ${totalPaid >= debt.amount}`)
+          console.log('─'.repeat(30))
+        })
+
+        const summary = get().getCustomerDebtSummary(customerId)
+        console.log('📊 Summary:', summary)
+        console.log('─'.repeat(50))
+      },
+
+      // Fix inconsistent debt states (debts marked as paid but with no payment records)
+      fixInconsistentDebts: () => {
+        set((state) => {
+          let fixedCount = 0
+          
+          const updatedCustomers = state.customers.map(customer => ({
+            ...customer,
+            debts: customer.debts.map(debt => {
+              const totalPaid = getTotalPaid(debt.payments)
+              const remainingAmount = parseMonetaryAmount(Math.max(0, debt.amount - totalPaid))
+              
+              // Check if debt is marked as paid but has no payment records for the full amount
+              if (debt.paid && totalPaid < debt.amount) {
+                console.log(`🔧 Fixing inconsistent debt: ${debt.reason} (${debt.amount} - ${totalPaid} = ${remainingAmount} missing)`)
+                
+                // Create payment record for the missing amount
+                const fixPayment = {
+                  amount: remainingAmount,
+                  date: new Date().toISOString(),
+                  source: 'consistency_fix'
+                }
+                
+                fixedCount++
+                return {
+                  ...debt,
+                  payments: [...debt.payments, fixPayment]
+                }
+              }
+              
+              return debt
+            })
+          }))
+          
+          console.log(`✅ Fixed ${fixedCount} inconsistent debts`)
+          
+          return {
+            ...state,
+            customers: updatedCustomers
+          }
+        })
       },
     }),
     {

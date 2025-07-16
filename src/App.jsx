@@ -679,6 +679,66 @@ function App() {
           console.log('💡 New preferences:', prefs)
         },
 
+        // Debug debt payment status
+        debugDebtStatus: (customerId) => {
+          const { debugDebtStatus } = useDebtStore.getState()
+          return debugDebtStatus(customerId)
+        },
+
+        // Helper function to get customer info by name
+        getCustomerByName: (name) => {
+          const { customers } = useDebtStore.getState()
+          const customer = customers.find(c => c.name.toLowerCase().includes(name.toLowerCase()))
+          if (customer) {
+            console.log('👤 Found customer:', {
+              id: customer.id,
+              name: customer.name,
+              phone: customer.phone,
+              totalDebts: customer.debts.length
+            })
+            return customer
+          } else {
+            console.log('❌ Customer not found with name:', name)
+            return null
+          }
+        },
+
+        // Helper function to debug debt status by customer name
+        debugDebtStatusByName: (name) => {
+          const customer = window.trackDeniDev.getCustomerByName(name)
+          if (customer) {
+            return window.trackDeniDev.debugDebtStatus(customer.id)
+          }
+        },
+
+        // List all customers
+        listCustomers: () => {
+          const { customers } = useDebtStore.getState()
+          console.log('👥 All customers:')
+          customers.forEach((customer, index) => {
+            console.log(`${index + 1}. ${customer.name} (ID: ${customer.id})`)
+          })
+          return customers
+        },
+
+        // Fix inconsistent debt states
+        fixInconsistentDebts: () => {
+          const { fixInconsistentDebts } = useDebtStore.getState()
+          return fixInconsistentDebts()
+        },
+
+        // Debug overview totals calculation
+        debugOverviewTotals: () => {
+          const { debugOverviewTotals } = useDebtStore.getState()
+          return debugOverviewTotals()
+        },
+
+        // Force state update to trigger re-renders
+        forceUpdate: () => {
+          const { forceUpdate } = useDebtStore.getState()
+          return forceUpdate()
+        },
+
         testAnimationSettings: async () => {
           console.log('🎭 Testing animation settings...')
           
@@ -873,6 +933,13 @@ function App() {
         console.log('  trackDeniDev.debugRealtimeSync() - 🔄 Test real-time sync status')
         console.log('  trackDeniDev.debugMigration() - 🔄 Enhanced debug migration')
         console.log('  trackDeniDev.testLogoutClear() - 🧪 Test logout data clearing')
+        console.log('  trackDeniDev.debugDebtStatus(customerId) - 🔍 Debug debt payment status')
+        console.log('  trackDeniDev.getCustomerByName(name) - 🔍 Find customer by name')
+        console.log('  trackDeniDev.debugDebtStatusByName(name) - 🔍 Debug debt status by customer name')
+        console.log('  trackDeniDev.listCustomers() - 📋 List all customers')
+        console.log('  trackDeniDev.fixInconsistentDebts() - 🔄 Fix inconsistent debt states')
+        console.log('  trackDeniDev.debugOverviewTotals() - 📊 Debug overview totals')
+        console.log('  trackDeniDev.forceUpdate() - 🔄 Force state update to trigger re-renders')
       }
   }, [])
 
