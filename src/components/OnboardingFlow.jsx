@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { t, setLanguage } from '../utils/localization'
 
 const OnboardingFlow = ({ onComplete }) => {
-  const [currentStep, setCurrentStep] = useState(0) // 0: language, 1-3: intro slides, 4: tutorial prompt
+  const [currentStep, setCurrentStep] = useState(0) // 0: language, 1-3: intro slides
   const [selectedLanguage, setSelectedLanguage] = useState('english')
 
   const languages = [
@@ -34,22 +34,22 @@ const OnboardingFlow = ({ onComplete }) => {
     }
   ]
 
-  const handleLanguageSelect = (langCode) => {
-    setSelectedLanguage(langCode)
-    setLanguage(langCode) // Set language in localization system
+  const handleLanguageSelect = (language) => {
+    setSelectedLanguage(language)
+    setLanguage(language)
     setCurrentStep(1) // Move to first slide
   }
 
   const handleNext = () => {
     if (currentStep < slides.length) {
       setCurrentStep(currentStep + 1)
-    } else if (currentStep === slides.length) {
-      // Move to tutorial prompt
-      setCurrentStep(currentStep + 1)
     } else {
-      // Store completion in localStorage and complete onboarding
+      // Complete onboarding - go directly to app
       localStorage.setItem('hasSeenIntro', 'true')
-      localStorage.setItem('hasSeenTutorial', 'true')
+      // Clean up old tutorial localStorage items
+      localStorage.removeItem('shouldShowTutorial')
+      localStorage.removeItem('hasSeenTutorial')
+      localStorage.removeItem('trackdeni-tutorial')
       onComplete()
     }
   }
@@ -62,13 +62,10 @@ const OnboardingFlow = ({ onComplete }) => {
 
   const handleSkip = () => {
     localStorage.setItem('hasSeenIntro', 'true')
-    localStorage.setItem('hasSeenTutorial', 'true')
-    onComplete()
-  }
-
-  const handleStartTutorial = () => {
-    localStorage.setItem('hasSeenIntro', 'true')
-    localStorage.setItem('shouldShowTutorial', 'true')
+    // Clean up old tutorial localStorage items
+    localStorage.removeItem('shouldShowTutorial')
+    localStorage.removeItem('hasSeenTutorial')
+    localStorage.removeItem('trackdeni-tutorial')
     onComplete()
   }
 
@@ -119,39 +116,6 @@ const OnboardingFlow = ({ onComplete }) => {
             className="w-full text-gray-500 text-sm py-3"
           >
             Skip for now
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Tutorial Prompt Screen
-  if (currentStep === slides.length + 1) {
-    return (
-      <div className="min-h-screen bg-bg flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-24 h-24 bg-accent rounded-full flex items-center justify-center mb-8">
-            <span className="text-4xl">🎓</span>
-          </div>
-          
-          <h1 className="text-2xl font-bold text-text mb-4 text-center">{t('tutorial.title')}</h1>
-          <p className="text-lg text-gray-600 mb-6 text-center">{t('tutorial.subtitle')}</p>
-          <p className="text-gray-600 text-center leading-relaxed max-w-sm">{t('tutorial.description')}</p>
-        </div>
-        
-        <div className="p-6 space-y-3">
-          <button
-            onClick={handleStartTutorial}
-            className="w-full btn-primary py-4 text-lg"
-          >
-            {t('tutorial.startTutorial')}
-          </button>
-          
-          <button
-            onClick={handleSkip}
-            className="w-full text-gray-500 py-3"
-          >
-            {t('tutorial.skipTutorial')}
           </button>
         </div>
       </div>

@@ -11,41 +11,15 @@ const PaymentModal = createPreloadableLazyComponent(
 )
 
 // Custom comparison function for React.memo
-const arePropsEqual = (prevProps, nextProps) => {
-  // Compare customer object by ID and key properties
-  if (prevProps.customer.id !== nextProps.customer.id) return false
-  if (prevProps.customer.name !== nextProps.customer.name) return false
-  if (prevProps.customer.phone !== nextProps.customer.phone) return false
-  
-  // Compare debts array length and basic properties
-  if (prevProps.customer.debts.length !== nextProps.customer.debts.length) return false
-  
-  // For performance, compare debts by their essential properties
-  for (let i = 0; i < prevProps.customer.debts.length; i++) {
-    const prevDebt = prevProps.customer.debts[i]
-    const nextDebt = nextProps.customer.debts[i]
-    
-    if (prevDebt.id !== nextDebt.id) return false
-    if (prevDebt.amount !== nextDebt.amount) return false
-    if (prevDebt.paid !== nextDebt.paid) return false
-    if (prevDebt.dueDate !== nextDebt.dueDate) return false
-    
-    // Compare payments array length (indicates payment changes)
-    const prevPayments = prevDebt.payments || []
-    const nextPayments = nextDebt.payments || []
-    if (prevPayments.length !== nextPayments.length) return false
-  }
-  
-  // Compare onClick function (should be stable)
+const propsAreEqual = (prevProps, nextProps) => {
+  // Compare customer object
+  if (prevProps.customer !== nextProps.customer) return false
   if (prevProps.onClick !== nextProps.onClick) return false
-  
-  // Compare tutorial object (basic comparison)
-  if (prevProps.tutorial !== nextProps.tutorial) return false
   
   return true
 }
 
-const CustomerCard = memo(({ customer, onClick, tutorial }) => {
+const CustomerCard = memo(({ customer, onClick }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const { getCustomerDebtSummary } = useDebtStore()
@@ -170,7 +144,6 @@ const CustomerCard = memo(({ customer, onClick, tutorial }) => {
           <button
             onClick={handleRecordPayment}
             onMouseEnter={handlePayButtonHover}
-            data-tutorial="pay-button"
             className={`bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 ${animationClasses.transition} ${animationClasses.focus}`}
           >
             Pay
@@ -207,10 +180,9 @@ const CustomerCard = memo(({ customer, onClick, tutorial }) => {
           setShowPaymentModal(false)
           setSelectedDebt(null)
         }}
-        tutorial={tutorial}
       />
     </div>
   )
-}, arePropsEqual)
+}, propsAreEqual)
 
 export default CustomerCard 

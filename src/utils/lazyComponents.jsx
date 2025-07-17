@@ -1,16 +1,17 @@
 import { lazy } from 'react'
 
-// Lazy load main pages for better initial bundle size
-export const Home = lazy(() => import('../pages/Home'))
-export const AddDebt = lazy(() => import('../pages/AddDebt'))
-export const CustomerDetail = lazy(() => import('../pages/CustomerDetail'))
-
-// Lazy load heavy components
-export const OnboardingFlow = lazy(() => import('../components/OnboardingFlow'))
-export const InteractiveTutorial = lazy(() => import('../components/InteractiveTutorial'))
+// Lazy load modal components for better performance
 export const PaymentModal = lazy(() => import('../components/PaymentModal'))
 export const ProWelcomeModal = lazy(() => import('../components/ProWelcomeModal'))
 export const UpgradePrompt = lazy(() => import('../components/UpgradePrompt'))
+export const ConfirmationDialog = lazy(() => import('../components/ConfirmationDialog'))
+
+// Lazy load page components
+export const AddDebt = lazy(() => import('../pages/AddDebt'))
+export const CustomerDetail = lazy(() => import('../pages/CustomerDetail'))
+
+// Lazy load form components
+export const DebtForm = lazy(() => import('../components/DebtForm'))
 
 // Loading component for suspense fallback
 export const LoadingFallback = ({ message = 'Loading...' }) => (

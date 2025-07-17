@@ -10,34 +10,17 @@ const parseMonetaryAmount = (amount) => {
 }
 
 // Custom comparison function for React.memo
-const arePropsEqual = (prevProps, nextProps) => {
-  // Compare basic props
+const propsAreEqual = (prevProps, nextProps) => {
+  // Compare essential props for debt form
   if (prevProps.customerId !== nextProps.customerId) return false
+  if (prevProps.initialData !== nextProps.initialData) return false
   if (prevProps.onSuccess !== nextProps.onSuccess) return false
   if (prevProps.onCancel !== nextProps.onCancel) return false
-  if (prevProps.tutorial !== nextProps.tutorial) return false
-  
-  // Compare initialData object
-  if (prevProps.initialData !== nextProps.initialData) {
-    // If one is null and other isn't, they're different
-    if (!prevProps.initialData || !nextProps.initialData) return false
-    
-    // Compare initialData properties
-    const prevInit = prevProps.initialData
-    const nextInit = nextProps.initialData
-    
-    if (prevInit.name !== nextInit.name) return false
-    if (prevInit.phone !== nextInit.phone) return false
-    if (prevInit.amount !== nextInit.amount) return false
-    if (prevInit.reason !== nextInit.reason) return false
-    if (prevInit.dateBorrowed !== nextInit.dateBorrowed) return false
-    if (prevInit.dueDate !== nextInit.dueDate) return false
-  }
   
   return true
 }
 
-const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, tutorial }) => {
+const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null }) => {
   const { 
     addCustomer, 
     addDebt, 
@@ -217,7 +200,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, tu
   }
 
   return (
-    <form onSubmit={handleSubmit} data-tutorial="customer-form" className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h2 className="text-xl font-semibold text-text mb-4">
         {isNewCustomer ? 'Add New Customer & Debt' : `Add Debt for ${existingCustomer?.name || 'Customer'}`}
       </h2>
@@ -492,7 +475,6 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, tu
         <button
           type="submit"
           disabled={isLoading}
-          data-tutorial="save-debt-button"
           className="flex-1 btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Saving...' : 'Save Debt'}
@@ -506,6 +488,6 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, tu
       />
     </form>
   )
-}, arePropsEqual)
+}, propsAreEqual)
 
 export default DebtForm 

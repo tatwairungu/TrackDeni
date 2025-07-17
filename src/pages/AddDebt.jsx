@@ -8,7 +8,7 @@ const DebtForm = createLazyComponent(
   { size: 'medium' }
 )
 
-const AddDebt = ({ customerId, onBack, onSuccess, tutorial, user, signIn, signOut }) => {
+const AddDebt = ({ customerId, onBack, onSuccess, user, signIn, signOut }) => {
   const { customers, clearAllData } = useDebtStore()
   const handleSuccess = (newCustomerId) => {
     // Show success feedback
@@ -84,7 +84,6 @@ const AddDebt = ({ customerId, onBack, onSuccess, tutorial, user, signIn, signOu
           customerId={customerId}
           onSuccess={handleSuccess}
           onCancel={onBack}
-          tutorial={tutorial}
         />
       </div>
     </div>

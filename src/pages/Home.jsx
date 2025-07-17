@@ -18,7 +18,7 @@ const ProWelcomeModal = createPreloadableLazyComponent(
   { inline: true, size: 'small' }
 )
 
-const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
+const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut }) => {
   const { 
     customers, 
     getTotalOwed, 
@@ -405,7 +405,6 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signI
                     key={customer.id}
                     customer={customer}
                     onClick={onNavigateToCustomer}
-                    tutorial={tutorial}
                   />
                 ))}
               </div>

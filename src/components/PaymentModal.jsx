@@ -8,65 +8,23 @@ const parseMonetaryAmount = (amount) => {
 }
 
 // Custom comparison function for React.memo
-const arePropsEqual = (prevProps, nextProps) => {
-  // Compare basic props
+const propsAreEqual = (prevProps, nextProps) => {
+  // Compare essential props for payment modal
+  if (prevProps.customer !== nextProps.customer) return false
+  if (prevProps.debt !== nextProps.debt) return false
   if (prevProps.isOpen !== nextProps.isOpen) return false
   if (prevProps.onClose !== nextProps.onClose) return false
-  if (prevProps.tutorial !== nextProps.tutorial) return false
-  
-  // Compare customer object
-  if (prevProps.customer !== nextProps.customer) {
-    if (!prevProps.customer || !nextProps.customer) return false
-    if (prevProps.customer.id !== nextProps.customer.id) return false
-    if (prevProps.customer.name !== nextProps.customer.name) return false
-  }
-  
-  // Compare debt object
-  if (prevProps.debt !== nextProps.debt) {
-    if (!prevProps.debt || !nextProps.debt) return false
-    if (prevProps.debt.id !== nextProps.debt.id) return false
-    if (prevProps.debt.amount !== nextProps.debt.amount) return false
-    if (prevProps.debt.paid !== nextProps.debt.paid) return false
-    
-    // Compare payments array length (indicates payment changes)
-    const prevPayments = prevProps.debt.payments || []
-    const nextPayments = nextProps.debt.payments || []
-    if (prevPayments.length !== nextPayments.length) return false
-  }
-  
-  // Compare allDebts array
-  if (prevProps.allDebts !== nextProps.allDebts) {
-    if (!prevProps.allDebts || !nextProps.allDebts) return false
-    if (prevProps.allDebts.length !== nextProps.allDebts.length) return false
-    
-    // Basic comparison of debt IDs
-    for (let i = 0; i < prevProps.allDebts.length; i++) {
-      if (prevProps.allDebts[i].id !== nextProps.allDebts[i].id) return false
-    }
-  }
+  if (prevProps.allDebts !== nextProps.allDebts) return false
   
   return true
 }
 
-const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose, tutorial }) => {
+const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
   const { addPayment, markDebtAsPaid } = useDebtStore()
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentType, setPaymentType] = useState('partial') // partial or full
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-
-  // Handle tutorial progression when modal opens
-  useEffect(() => {
-    if (isOpen && tutorial?.onRecordPaymentClicked) {
-      console.log('PaymentModal: Advancing tutorial step')
-      // Small delay to ensure DOM is ready
-      const timer = setTimeout(() => {
-        tutorial.onRecordPaymentClicked()
-        console.log('PaymentModal: Called onRecordPaymentClicked')
-      }, 50)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen, tutorial])
 
   if (!isOpen || !customer) return null
 
@@ -136,8 +94,6 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose, tutorial
       setPaymentType('partial')
       onClose()
       
-      // Handle tutorial progression
-      tutorial?.onPaymentSubmitted()
     } catch (err) {
       setError('Failed to record payment. Please try again.')
     } finally {
@@ -241,7 +197,7 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose, tutorial
           </div>
         )}
 
-        <form onSubmit={handleSubmit} data-tutorial="payment-modal" className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Payment Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
@@ -362,7 +318,6 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose, tutorial
             <button
               type="submit"
               disabled={isLoading}
-              data-tutorial="record-payment-button"
               className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                 paymentType === 'full'
                   ? 'bg-success text-white hover:bg-success/90'
@@ -377,6 +332,6 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose, tutorial
       </div>
     </div>
   )
-}, arePropsEqual)
+}, propsAreEqual)
 
 export default PaymentModal 

@@ -3,11 +3,9 @@ import Home from './pages/Home'
 import AddDebt from './pages/AddDebt'
 import CustomerDetail from './pages/CustomerDetail'
 import OnboardingFlow from './components/OnboardingFlow'
-import InteractiveTutorial from './components/InteractiveTutorial'
 import AuthGuard from './components/AuthGuard'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import OfflineIndicator from './components/OfflineIndicator'
-import { useTutorial } from './hooks/useTutorial'
 import useDebtStore from './store/useDebtStore'
 import { initBundleOptimization } from './utils/bundleOptimization'
 import { initLiteModeStyles } from './utils/liteModeStyles'
@@ -20,14 +18,16 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Interactive tutorial hook
-  const tutorial = useTutorial()
-
   // Check if user has seen onboarding
   useEffect(() => {
     const hasSeenIntro = localStorage.getItem('hasSeenIntro')
     setShowOnboarding(!hasSeenIntro)
     setIsLoading(false)
+    
+    // Clean up old tutorial localStorage items from previous version
+    localStorage.removeItem('shouldShowTutorial')
+    localStorage.removeItem('hasSeenTutorial')
+    localStorage.removeItem('trackdeni-tutorial')
   }, [])
 
   // Initialize performance optimizations (only once)
@@ -213,8 +213,6 @@ function App() {
   const navigateToAddDebt = (customerId = null) => {
     setSelectedCustomerId(customerId)
     setCurrentPage('add-debt')
-    // Handle tutorial progression
-    tutorial.onAddButtonClicked()
   }
 
   const navigateToCustomer = (customer, action = 'view') => {
@@ -229,19 +227,12 @@ function App() {
   }
 
   const handleDebtSuccess = (customerId) => {
-    // Handle tutorial progression
-    tutorial.onCustomerFormSubmitted(customerId)
     // Navigate back to home after successful debt creation
     navigateToHome()
   }
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false)
-    // Check if tutorial should be shown after onboarding
-    const shouldShowTutorial = localStorage.getItem('shouldShowTutorial')
-    if (shouldShowTutorial) {
-      tutorial.startTutorial()
-    }
   }
 
   const renderCurrentPage = (user, signIn, signOut) => {
@@ -252,7 +243,6 @@ function App() {
             customerId={selectedCustomerId}
             onBack={navigateToHome}
             onSuccess={handleDebtSuccess}
-            tutorial={tutorial}
             user={user}
             signIn={signIn}
             signOut={signOut}
@@ -264,7 +254,6 @@ function App() {
             customerId={selectedCustomerId}
             onBack={navigateToHome}
             onNavigateToAddDebt={navigateToAddDebt}
-            tutorial={tutorial}
             user={user}
             signIn={signIn}
             signOut={signOut}
@@ -276,7 +265,6 @@ function App() {
           <Home
             onNavigateToAddDebt={navigateToAddDebt}
             onNavigateToCustomer={navigateToCustomer}
-            tutorial={tutorial}
             user={user}
             signIn={signIn}
             signOut={signOut}
@@ -304,19 +292,13 @@ function App() {
     return <OnboardingFlow onComplete={handleOnboardingComplete} />
   }
 
-  // Show main app with interactive tutorial if needed
+  // Show main app
   return (
     <AuthGuard requireAuth={false}>
       {({ user, signIn, signOut }) => (
     <div className="relative">
           <OfflineIndicator />
           {renderCurrentPage(user, signIn, signOut)}
-      {tutorial.isActive && (
-        <InteractiveTutorial 
-          currentStep={tutorial.currentStep}
-          onComplete={tutorial.completeTutorial}
-        />
-      )}
           <PWAInstallPrompt />
     </div>
       )}
