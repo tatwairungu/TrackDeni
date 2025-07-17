@@ -378,7 +378,24 @@ const useDebtStore = create(
                   ...customer,
                   debts: customer.debts.map(debt => 
                     debt.id === debtId 
-                      ? { ...debt, paid: true }
+                      ? (() => {
+                          // Calculate remaining amount to pay
+                          const totalPaid = getTotalPaid(debt.payments)
+                          const remainingAmount = Math.max(0, debt.amount - totalPaid)
+                          
+                          // Create payment record for remaining amount (if any)
+                          const fullPayment = remainingAmount > 0 ? {
+                            amount: parseMonetaryAmount(remainingAmount),
+                            date: new Date().toISOString(),
+                            source: 'mark_as_paid'
+                          } : null
+                          
+                          return {
+                            ...debt,
+                            payments: fullPayment ? [...debt.payments, fullPayment] : debt.payments,
+                            paid: true
+                          }
+                        })()
                       : debt
                   )
                 }
@@ -393,19 +410,41 @@ const useDebtStore = create(
           
           if (auth.currentUser) {
             const { db } = await import('../firebase/config.js')
-            const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore')
+            const { doc, updateDoc, serverTimestamp, getDoc } = await import('firebase/firestore')
             
             const userId = auth.currentUser.uid
             
-            // Update debt status in Firestore
+            // Get current debt from Firestore to calculate remaining amount
             const debtRef = doc(db, 'users', userId, 'debts', debtId)
-            await updateDoc(debtRef, {
-              paid: true,
-              status: 'paid',
-              updatedAt: serverTimestamp()
-            })
+            const debtDoc = await getDoc(debtRef)
             
-            console.log('✅ Debt status synced to Firestore successfully')
+            if (debtDoc.exists()) {
+              const currentDebt = debtDoc.data()
+              const currentPayments = currentDebt.payments || []
+              
+              // Calculate remaining amount to pay
+              const totalPaid = currentPayments.reduce((sum, p) => sum + p.amount, 0)
+              const remainingAmount = Math.max(0, currentDebt.amount - totalPaid)
+              
+              // Create payment record for remaining amount (if any)
+              const updatedPayments = remainingAmount > 0 
+                ? [...currentPayments, {
+                    amount: parseMonetaryAmount(remainingAmount),
+                    date: new Date().toISOString(),
+                    source: 'mark_as_paid'
+                  }]
+                : currentPayments
+              
+              // Update debt in Firestore
+              await updateDoc(debtRef, {
+                payments: updatedPayments,
+                paid: true,
+                status: 'paid',
+                updatedAt: serverTimestamp()
+              })
+              
+              console.log('✅ Debt status synced to Firestore successfully')
+            }
           }
         } catch (error) {
           console.error('❌ Failed to sync debt status to Firestore:', error)
@@ -682,6 +721,79 @@ const useDebtStore = create(
 
       // Reset pagination when filter changes
       resetPagination: () => set({ currentPage: 1 }),
+
+      // Development testing helper for markDebtAsPaid fix
+      testMarkDebtAsPaidFix: () => {
+        if (typeof window !== 'undefined' && window.trackDeniDev) {
+          const state = get()
+          console.log('🧪 Testing markDebtAsPaid fix...')
+          
+          // Create test customer and debt
+          const testCustomer = {
+            id: 'test-customer-123',
+            name: 'Test Customer',
+            phone: '0700000000',
+            debts: [{
+              id: 'test-debt-456',
+              amount: 1000,
+              reason: 'Test debt',
+              dateBorrowed: new Date().toISOString(),
+              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              paid: false,
+              payments: [
+                {
+                  amount: 300,
+                  date: new Date().toISOString(),
+                  source: 'manual'
+                }
+              ],
+              createdAt: new Date().toISOString(),
+            }],
+            createdAt: new Date().toISOString(),
+          }
+          
+          // Add test customer temporarily
+          set((state) => ({
+            ...state,
+            customers: [...state.customers, testCustomer]
+          }))
+          
+          console.log('📊 Before markDebtAsPaid:')
+          console.log('- Debt amount:', testCustomer.debts[0].amount)
+          console.log('- Existing payments:', testCustomer.debts[0].payments)
+          console.log('- Total paid:', getTotalPaid(testCustomer.debts[0].payments))
+          console.log('- Store getTotalPaid():', state.getTotalPaid())
+          
+          // Mark debt as paid
+          state.markDebtAsPaid('test-customer-123', 'test-debt-456')
+          
+          // Check results after a short delay
+          setTimeout(() => {
+            const newState = get()
+            const testCustomerAfter = newState.customers.find(c => c.id === 'test-customer-123')
+            const testDebtAfter = testCustomerAfter?.debts.find(d => d.id === 'test-debt-456')
+            
+            console.log('📊 After markDebtAsPaid:')
+            console.log('- Debt paid status:', testDebtAfter?.paid)
+            console.log('- Updated payments:', testDebtAfter?.payments)
+            console.log('- Total paid for debt:', getTotalPaid(testDebtAfter?.payments || []))
+            console.log('- Store getTotalPaid():', newState.getTotalPaid())
+            
+            // Verify the fix
+            if (testDebtAfter?.paid && getTotalPaid(testDebtAfter.payments) === 1000) {
+              console.log('✅ Fix verified: markDebtAsPaid now creates proper payment records!')
+            } else {
+              console.error('❌ Fix failed: Payment records not created correctly')
+            }
+            
+            // Clean up test data
+            set((state) => ({
+              ...state,
+              customers: state.customers.filter(c => c.id !== 'test-customer-123')
+            }))
+          }, 100)
+        }
+      },
     }),
     {
       name: 'trackdeni-storage',
