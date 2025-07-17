@@ -130,6 +130,81 @@ function App() {
     }
   }, [])
 
+  // Debug tools for development
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    // Import and expose migration/logout debug tools
+    import('./firebase/dataSync.js').then(({ debugTools, migrationUtils, clearUserData, inspectUserDocument }) => {
+      if (!window.trackDeniDev) {
+        window.trackDeniDev = {}
+      }
+      
+      // Add migration and logout debug tools
+      window.trackDeniDev.testMigrationFlow = debugTools.testMigrationFlow
+      window.trackDeniDev.testLogoutClear = debugTools.testLogoutClear
+      window.trackDeniDev.testDataStructure = debugTools.testDataStructure
+      window.trackDeniDev.testFullMigrationFlow = debugTools.testFullMigrationFlow
+      window.trackDeniDev.migrationUtils = migrationUtils
+      window.trackDeniDev.clearUserData = clearUserData
+      
+      // Add user document inspector
+      window.trackDeniDev.inspectUserDocument = inspectUserDocument
+      
+      // Add convenience function to get current user and inspect their document
+      window.trackDeniDev.inspectCurrentUser = async () => {
+        try {
+          const { auth } = await import('./firebase/config.js')
+          const user = auth.currentUser
+          if (user) {
+            console.log('🔍 Current user:', user.uid)
+            return await inspectUserDocument(user.uid)
+          } else {
+            console.log('❌ No current user logged in')
+            return null
+          }
+        } catch (error) {
+          console.error('❌ Error inspecting current user:', error)
+          return null
+        }
+      }
+      
+      // Add function to check current storage state
+      window.trackDeniDev.checkStorageState = async () => {
+        try {
+          const { storage } = await import('./utils/storage.js')
+          const data = await storage.getData()
+          const info = await storage.getStorageInfo()
+          
+          console.log('📊 Storage Info:', info)
+          console.log('📊 Storage Data:', data)
+          
+          if (data) {
+            if (data.customers) {
+              console.log('👥 Direct format - Customers:', data.customers.length)
+            } else if (data.state && data.state.customers) {
+              console.log('👥 Zustand format - Customers:', data.state.customers.length)
+            }
+          }
+          
+          return { info, data }
+        } catch (error) {
+          console.error('❌ Error checking storage state:', error)
+          return null
+        }
+      }
+      
+      console.log('🧪 Debug tools loaded:')
+      console.log('- trackDeniDev.testMigrationFlow() - Test migration functionality')
+      console.log('- trackDeniDev.testLogoutClear() - Test logout data clearing')
+      console.log('- trackDeniDev.testDataStructure() - Test data structure consistency')
+      console.log('- trackDeniDev.testFullMigrationFlow() - Test full migration with real storage')
+      console.log('- trackDeniDev.clearUserData() - Clear all user data')
+      console.log('- trackDeniDev.inspectUserDocument(userId) - Inspect user document in Firestore')
+      console.log('- trackDeniDev.inspectCurrentUser() - Inspect current logged-in user document')
+      console.log('- trackDeniDev.checkStorageState() - Check current storage state and data')
+      console.log('- trackDeniDev.migrationUtils - Access migration utilities')
+    })
+  }
+
   const navigateToHome = () => {
     setCurrentPage('home')
     setSelectedCustomerId(null)

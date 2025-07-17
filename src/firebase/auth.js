@@ -272,10 +272,16 @@ export const getUserDocument = async (userId) => {
 // Sign out
 export const signOutUser = async () => {
   try {
+    // First, sign out from Firebase
     await signOut(auth)
     
-    // Clear local store data to prevent data from remaining on screen
-    localStorage.removeItem('trackdeni-storage')
+    // Use comprehensive user data clearing to prevent data leakage
+    const { clearUserData } = await import('./dataSync')
+    const clearResult = await clearUserData()
+    
+    if (!clearResult.success) {
+      console.warn('⚠️ User data clearing had issues:', clearResult.error)
+    }
     
     // Force page reload to ensure clean state
     window.location.reload()
@@ -283,6 +289,15 @@ export const signOutUser = async () => {
     return { success: true, message: 'Successfully logged out' }
   } catch (error) {
     console.error('Sign out error:', error)
+    
+    // Even if there's an error, try to clear data
+    try {
+      const { clearUserData } = await import('./dataSync')
+      await clearUserData()
+    } catch (clearError) {
+      console.error('Error clearing user data during logout error:', clearError)
+    }
+    
     return { success: false, error: error.message }
   }
 }

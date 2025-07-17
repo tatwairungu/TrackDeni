@@ -653,6 +653,33 @@ const useDebtStore = create(
       }),
       clearAllData: () => set({ customers: [], error: null, userTier: 'free', showUpgradePrompt: false, showProWelcome: false, currentPage: 1 }),
 
+      // Comprehensive user data clearing for logout security
+      clearUserData: () => {
+        console.log('🗑️ Clearing user data from store...')
+        set({
+          // Reset core data
+          customers: [],
+          
+          // Reset UI state
+          isLoading: false,
+          error: null,
+          
+          // Reset pagination
+          currentPage: 1,
+          
+          // Reset tier state
+          userTier: 'free',
+          showUpgradePrompt: false,
+          showProWelcome: false,
+          
+          // Reset signup encouragement
+          showSignupEncouragement: false,
+          dismissedCustomerCounts: [],
+          lastSignupPromptCustomerCount: 0
+        })
+        console.log('✅ Store data cleared successfully')
+      },
+
       // Load customers from cloud sync
       loadCustomers: (customers) => {
         console.log('📊 Loading customers from cloud sync:', customers.length)
