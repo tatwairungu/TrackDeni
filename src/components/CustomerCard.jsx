@@ -1,13 +1,56 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
-import PaymentModal from './PaymentModal'
+import { createPreloadableLazyComponent } from '../utils/LazyComponent'
+import { useAnimationClasses } from '../utils/liteModeStyles'
 
-const CustomerCard = ({ customer, onClick, tutorial }) => {
+// Lazy load PaymentModal since it's only needed when user clicks "Pay"
+const PaymentModal = createPreloadableLazyComponent(
+  () => import('./PaymentModal'),
+  { inline: true, size: 'small' }
+)
+
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps, nextProps) => {
+  // Compare customer object by ID and key properties
+  if (prevProps.customer.id !== nextProps.customer.id) return false
+  if (prevProps.customer.name !== nextProps.customer.name) return false
+  if (prevProps.customer.phone !== nextProps.customer.phone) return false
+  
+  // Compare debts array length and basic properties
+  if (prevProps.customer.debts.length !== nextProps.customer.debts.length) return false
+  
+  // For performance, compare debts by their essential properties
+  for (let i = 0; i < prevProps.customer.debts.length; i++) {
+    const prevDebt = prevProps.customer.debts[i]
+    const nextDebt = nextProps.customer.debts[i]
+    
+    if (prevDebt.id !== nextDebt.id) return false
+    if (prevDebt.amount !== nextDebt.amount) return false
+    if (prevDebt.paid !== nextDebt.paid) return false
+    if (prevDebt.dueDate !== nextDebt.dueDate) return false
+    
+    // Compare payments array length (indicates payment changes)
+    const prevPayments = prevDebt.payments || []
+    const nextPayments = nextDebt.payments || []
+    if (prevPayments.length !== nextPayments.length) return false
+  }
+  
+  // Compare onClick function (should be stable)
+  if (prevProps.onClick !== nextProps.onClick) return false
+  
+  // Compare tutorial object (basic comparison)
+  if (prevProps.tutorial !== nextProps.tutorial) return false
+  
+  return true
+}
+
+const CustomerCard = memo(({ customer, onClick, tutorial }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const { getCustomerDebtSummary } = useDebtStore()
   const summary = getCustomerDebtSummary(customer.id)
+  const animationClasses = useAnimationClasses()
   
   // Get the most urgent debt for status display
   const getMostUrgentDebt = () => {
@@ -57,11 +100,16 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
     }
   }
 
+  // Preload PaymentModal when user hovers over Pay button
+  const handlePayButtonHover = () => {
+    PaymentModal.preload()
+  }
+
   return (
-    <div className="card hover:shadow-lg transition-shadow">
+    <div className={`card ${animationClasses.transition} ${animationClasses.hoverShadow} ${animationClasses.hover}`}>
       {/* Header with name and status - Clickable area */}
       <div 
-        className="flex items-start justify-between mb-3 cursor-pointer rounded-lg p-2 -m-2 hover:bg-gray-50 transition-colors"
+        className={`flex items-start justify-between mb-3 cursor-pointer rounded-lg p-2 -m-2 hover:bg-gray-50 ${animationClasses.transition}`}
         onClick={() => onClick && onClick(customer)}
       >
         <div className="flex-1">
@@ -121,15 +169,16 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
         {urgentDebt && (
           <button
             onClick={handleRecordPayment}
+            onMouseEnter={handlePayButtonHover}
             data-tutorial="pay-button"
-            className="bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 transition-colors"
+            className={`bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 ${animationClasses.transition} ${animationClasses.focus}`}
           >
             Pay
           </button>
         )}
         <button
           onClick={handleSendSMS}
-          className={`bg-accent text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-accent/90 transition-colors ${
+          className={`bg-accent text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-accent/90 ${animationClasses.transition} ${animationClasses.focus} ${
             !urgentDebt ? 'col-span-2' : ''
           }`}
         >
@@ -143,7 +192,7 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
               onClick(customer, 'add-debt')
             }
           }}
-          className="bg-gray-100 text-gray-700 py-2 px-2 rounded-lg font-medium text-xs hover:bg-gray-200 transition-colors"
+          className={`bg-gray-100 text-gray-700 py-2 px-2 rounded-lg font-medium text-xs hover:bg-gray-200 ${animationClasses.transition} ${animationClasses.focus}`}
         >
           Add
         </button>
@@ -162,6 +211,6 @@ const CustomerCard = ({ customer, onClick, tutorial }) => {
       />
     </div>
   )
-}
+}, arePropsEqual)
 
 export default CustomerCard 

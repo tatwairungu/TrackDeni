@@ -60,70 +60,67 @@ export const useLiteMode = () => {
     initializeLiteMode()
   }, [])
 
-  // Manual enable Lite Mode
-  const enable = (reason = 'Manually enabled') => {
+  // Manual enable/disable functions
+  const enable = (reason = 'Enabled manually') => {
     try {
-      const newState = enableLiteMode(reason)
-      setLiteModeState({
-        enabled: true,
-        reason: newState.reason,
-        source: 'manual',
-        isLoading: false
-      })
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💡 Lite Mode manually enabled:', reason)
+      enableLiteMode(reason)
+      const newState = shouldUseLiteMode()
+      setLiteModeState(newState)
+      
+      // Emit event for style system
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('lite-mode-changed', {
+          detail: { enabled: true, reason }
+        }))
       }
-
-      return true
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Lite Mode enabled:', reason)
+      }
     } catch (error) {
       console.error('Failed to enable Lite Mode:', error)
-      return false
     }
   }
 
-  // Manual disable Lite Mode
-  const disable = (reason = 'Manually disabled') => {
+  const disable = (reason = 'Disabled manually') => {
     try {
-      const newState = disableLiteMode(reason)
-      setLiteModeState({
-        enabled: false,
-        reason: newState.reason,
-        source: 'manual',
-        isLoading: false
-      })
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('💡 Lite Mode manually disabled:', reason)
+      disableLiteMode(reason)
+      const newState = shouldUseLiteMode()
+      setLiteModeState(newState)
+      
+      // Emit event for style system
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('lite-mode-changed', {
+          detail: { enabled: false, reason }
+        }))
       }
-
-      return true
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Lite Mode disabled:', reason)
+      }
     } catch (error) {
       console.error('Failed to disable Lite Mode:', error)
-      return false
     }
   }
 
-  // Reset to auto-detection
   const reset = () => {
     try {
       resetLiteModePreference()
+      const newState = shouldUseLiteMode()
+      setLiteModeState(newState)
       
-      // Re-run auto-detection
-      const autoState = shouldUseLiteMode()
-      setLiteModeState({
-        ...autoState,
-        isLoading: false
-      })
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Lite Mode reset to auto-detection')
+      // Emit event for style system
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('lite-mode-changed', {
+          detail: { enabled: newState.enabled, reason: 'Reset to auto' }
+        }))
       }
-
-      return true
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Lite Mode reset to auto-detection')
+      }
     } catch (error) {
       console.error('Failed to reset Lite Mode:', error)
-      return false
     }
   }
 

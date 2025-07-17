@@ -1,6 +1,12 @@
 import Header from '../components/Header'
-import DebtForm from '../components/DebtForm'
 import useDebtStore from '../store/useDebtStore'
+import createLazyComponent from '../utils/LazyComponent'
+
+// Lazy load DebtForm since it's only needed on this page
+const DebtForm = createLazyComponent(
+  () => import('../components/DebtForm'),
+  { size: 'medium' }
+)
 
 const AddDebt = ({ customerId, onBack, onSuccess, tutorial, user, signIn, signOut }) => {
   const { customers, clearAllData } = useDebtStore()

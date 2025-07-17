@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import useDebtStore from '../store/useDebtStore'
 import { formatDate } from '../utils/dateUtils'
 
@@ -7,7 +7,48 @@ const parseMonetaryAmount = (amount) => {
   return Math.round(parseFloat(amount) * 100) / 100
 }
 
-const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) => {
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps, nextProps) => {
+  // Compare basic props
+  if (prevProps.isOpen !== nextProps.isOpen) return false
+  if (prevProps.onClose !== nextProps.onClose) return false
+  if (prevProps.tutorial !== nextProps.tutorial) return false
+  
+  // Compare customer object
+  if (prevProps.customer !== nextProps.customer) {
+    if (!prevProps.customer || !nextProps.customer) return false
+    if (prevProps.customer.id !== nextProps.customer.id) return false
+    if (prevProps.customer.name !== nextProps.customer.name) return false
+  }
+  
+  // Compare debt object
+  if (prevProps.debt !== nextProps.debt) {
+    if (!prevProps.debt || !nextProps.debt) return false
+    if (prevProps.debt.id !== nextProps.debt.id) return false
+    if (prevProps.debt.amount !== nextProps.debt.amount) return false
+    if (prevProps.debt.paid !== nextProps.debt.paid) return false
+    
+    // Compare payments array length (indicates payment changes)
+    const prevPayments = prevProps.debt.payments || []
+    const nextPayments = nextProps.debt.payments || []
+    if (prevPayments.length !== nextPayments.length) return false
+  }
+  
+  // Compare allDebts array
+  if (prevProps.allDebts !== nextProps.allDebts) {
+    if (!prevProps.allDebts || !nextProps.allDebts) return false
+    if (prevProps.allDebts.length !== nextProps.allDebts.length) return false
+    
+    // Basic comparison of debt IDs
+    for (let i = 0; i < prevProps.allDebts.length; i++) {
+      if (prevProps.allDebts[i].id !== nextProps.allDebts[i].id) return false
+    }
+  }
+  
+  return true
+}
+
+const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose, tutorial }) => {
   const { addPayment, markDebtAsPaid } = useDebtStore()
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentType, setPaymentType] = useState('partial') // partial or full
@@ -336,6 +377,6 @@ const PaymentModal = ({ customer, debt, allDebts, isOpen, onClose, tutorial }) =
       </div>
     </div>
   )
-}
+}, arePropsEqual)
 
 export default PaymentModal 

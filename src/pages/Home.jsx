@@ -2,11 +2,21 @@ import { useState, useMemo } from 'react'
 import useDebtStore from '../store/useDebtStore'
 import CustomerCard from '../components/CustomerCard'
 import Header from '../components/Header'
-import UpgradePrompt from '../components/UpgradePrompt'
-import ProWelcomeModal from '../components/ProWelcomeModal'
 import PerformanceWarning from '../components/PerformanceWarning'
 import LiteModeIndicator from '../components/LiteModeIndicator'
 import StorageIndicator from '../components/StorageIndicator'
+import { createPreloadableLazyComponent } from '../utils/LazyComponent'
+
+// Lazy load modals that are only shown conditionally
+const UpgradePrompt = createPreloadableLazyComponent(
+  () => import('../components/UpgradePrompt'),
+  { inline: true, size: 'small' }
+)
+
+const ProWelcomeModal = createPreloadableLazyComponent(
+  () => import('../components/ProWelcomeModal'),
+  { inline: true, size: 'small' }
+)
 
 const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, tutorial, user, signIn, signOut }) => {
   const { 

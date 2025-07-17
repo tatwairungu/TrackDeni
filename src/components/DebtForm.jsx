@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { getTodayDate, addDays } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
 import UpgradePrompt from './UpgradePrompt'
@@ -9,7 +9,35 @@ const parseMonetaryAmount = (amount) => {
   return Math.round(parseFloat(amount) * 100) / 100
 }
 
-const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutorial }) => {
+// Custom comparison function for React.memo
+const arePropsEqual = (prevProps, nextProps) => {
+  // Compare basic props
+  if (prevProps.customerId !== nextProps.customerId) return false
+  if (prevProps.onSuccess !== nextProps.onSuccess) return false
+  if (prevProps.onCancel !== nextProps.onCancel) return false
+  if (prevProps.tutorial !== nextProps.tutorial) return false
+  
+  // Compare initialData object
+  if (prevProps.initialData !== nextProps.initialData) {
+    // If one is null and other isn't, they're different
+    if (!prevProps.initialData || !nextProps.initialData) return false
+    
+    // Compare initialData properties
+    const prevInit = prevProps.initialData
+    const nextInit = nextProps.initialData
+    
+    if (prevInit.name !== nextInit.name) return false
+    if (prevInit.phone !== nextInit.phone) return false
+    if (prevInit.amount !== nextInit.amount) return false
+    if (prevInit.reason !== nextInit.reason) return false
+    if (prevInit.dateBorrowed !== nextInit.dateBorrowed) return false
+    if (prevInit.dueDate !== nextInit.dueDate) return false
+  }
+  
+  return true
+}
+
+const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, tutorial }) => {
   const { 
     addCustomer, 
     addDebt, 
@@ -478,6 +506,6 @@ const DebtForm = ({ customerId, onSuccess, onCancel, initialData = null, tutoria
       />
     </form>
   )
-}
+}, arePropsEqual)
 
 export default DebtForm 
