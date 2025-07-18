@@ -452,11 +452,53 @@ const useDebtStore = create(
         }
       },
 
-      deleteCustomer: (customerId) => {
+      deleteCustomer: async (customerId) => {
+        const state = get()
+        
+        // Find the customer to get deletion info
+        const customerToDelete = state.customers.find(customer => customer.id === customerId)
+        if (!customerToDelete) {
+          set({ error: 'Customer not found' })
+          return { success: false, error: 'Customer not found' }
+        }
+        
+        // Update local state first
         set((state) => ({
           customers: state.customers.filter(customer => customer.id !== customerId),
           error: null
         }))
+        
+        // If user is authenticated, sync to Firestore
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (auth.currentUser) {
+            const { deleteCustomer: deleteCustomerFromFirestore } = await import('../firebase/firestore.js')
+            
+            const userId = auth.currentUser.uid
+            const result = await deleteCustomerFromFirestore(userId, customerId)
+            
+            if (result.success) {
+              console.log('✅ Customer and all debts deleted from Firestore successfully')
+              return { success: true, deletedCustomer: customerToDelete }
+            } else {
+              console.error('❌ Failed to delete customer from Firestore:', result.error)
+              // Rollback local state if Firestore deletion failed
+              set((state) => ({
+                customers: [...state.customers, customerToDelete].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+                error: `Failed to delete customer from cloud: ${result.error}`
+              }))
+              return { success: false, error: result.error }
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error during customer deletion:', error)
+          set({ error: 'Failed to sync deletion to cloud, but local deletion successful' })
+          return { success: true, deletedCustomer: customerToDelete, warning: 'Cloud sync failed' }
+        }
+        
+        // Local-only deletion successful
+        return { success: true, deletedCustomer: customerToDelete }
       },
 
       deleteDebt: (customerId, debtId) => {

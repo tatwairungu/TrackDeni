@@ -6,12 +6,14 @@ import useDebtStore from '../store/useDebtStore'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort, formatDate } from '../utils/dateUtils'
 
 const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, user, signIn, signOut }) => {
-  const { customers, getCustomerDebtSummary, clearAllData, deleteDebt } = useDebtStore()
+  const { customers, getCustomerDebtSummary, clearAllData, deleteDebt, deleteCustomer } = useDebtStore()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [selectedDebt, setSelectedDebt] = useState(null)
   const [paymentMode, setPaymentMode] = useState('single') // single or multiple
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [debtToDelete, setDebtToDelete] = useState(null)
+  const [showDeleteCustomerDialog, setShowDeleteCustomerDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   const customer = customers.find(c => c.id === customerId)
   
@@ -79,6 +81,30 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, user, signIn,
   const cancelDeleteDebt = () => {
     setShowDeleteDialog(false)
     setDebtToDelete(null)
+  }
+
+  const handleDeleteCustomer = () => {
+    setShowDeleteCustomerDialog(true)
+  }
+
+  const handleConfirmDeleteCustomer = async () => {
+    setIsDeleting(true)
+    try {
+      const result = await deleteCustomer(customerId)
+      
+      if (result.success) {
+        setShowDeleteCustomerDialog(false)
+        // Navigate back to home after successful deletion
+        onBack()
+      } else {
+        alert(`Failed to delete customer: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error)
+      alert('An unexpected error occurred while deleting the customer.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   // Menu action handlers
@@ -202,6 +228,17 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, user, signIn,
               Pay All Outstanding (KES {summary.totalOwed.toLocaleString()})
             </button>
           )}
+
+          {/* Delete Customer Button */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={handleDeleteCustomer}
+              disabled={isDeleting}
+              className="w-full py-2 px-4 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Customer & All Debts'}
+            </button>
+          </div>
         </div>
 
         {/* Active Debts */}
@@ -380,6 +417,28 @@ const CustomerDetail = ({ customerId, onBack, onNavigateToAddDebt, user, signIn,
           ] : [])
         ] : []}
         confirmText="Delete Debt"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Delete Customer Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={showDeleteCustomerDialog}
+        onClose={() => setShowDeleteCustomerDialog(false)}
+        onConfirm={handleConfirmDeleteCustomer}
+        title="Delete Customer & All Debts"
+        message="⚠️ WARNING: This action cannot be undone! You are about to permanently delete this customer and ALL associated data."
+        details={[
+          { label: "Customer", value: customer.name },
+          { label: "Phone", value: customer.phone || 'No phone number' },
+          { label: "Total Debts", value: `${customer.debts.length} debt${customer.debts.length !== 1 ? 's' : ''}` },
+          { label: "Outstanding Amount", value: `KES ${summary.totalOwed.toLocaleString()}` },
+          { label: "Total Paid", value: `KES ${summary.totalPaid.toLocaleString()}` },
+          { label: "Payment History", value: `${customer.debts.reduce((total, debt) => total + (debt.payments?.length || 0), 0)} payment record${customer.debts.reduce((total, debt) => total + (debt.payments?.length || 0), 0) !== 1 ? 's' : ''}` },
+          { label: "Data Storage", value: user ? 'Local + Cloud (Firestore)' : 'Local only' },
+          { label: "Consequence", value: "ALL debt records, payment history, and customer data will be permanently deleted" }
+        ]}
+        confirmText={isDeleting ? "Deleting..." : "DELETE PERMANENTLY"}
         cancelText="Cancel"
         type="danger"
       />
