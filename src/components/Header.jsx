@@ -61,7 +61,7 @@ const Header = ({ title = "TrackDeni", showBack = false, onBack, actions = [], o
               <button
                 key={index}
                 onClick={action.onClick}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors flex items-center justify-center ${
                   action.variant === 'primary' 
                     ? 'bg-primary text-white hover:bg-primary/90' 
                     : 'text-gray-600 hover:bg-gray-100'
