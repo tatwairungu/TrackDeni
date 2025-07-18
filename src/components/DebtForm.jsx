@@ -292,7 +292,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
                 value={formData.phone}
                 onChange={handleInputChange('phone')}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
-                  errors.phone ? 'border-danger' : 'border-gray-300'
+                  errors.phone ? 'border-danger' : 'border-border'
                 }`}
                 placeholder="0712345678 or +254712345678"
               />
@@ -349,7 +349,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
               MozAppearance: 'textfield' // Firefox
             }}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-              errors.amount ? 'border-danger' : 'border-gray-300'
+              errors.amount ? 'border-danger' : 'border-border'
             }`}
             placeholder="0.00"
           />
@@ -366,7 +366,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
             value={formData.reason}
             onChange={handleInputChange('reason')}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-              errors.reason ? 'border-danger' : 'border-gray-300'
+              errors.reason ? 'border-danger' : 'border-border'
             }`}
             placeholder="e.g., Sukari 2kg, Unga 1kg, Loan"
           />
@@ -384,7 +384,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
               value={formData.dateBorrowed}
               onChange={handleInputChange('dateBorrowed')}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
-                errors.dateBorrowed ? 'border-danger' : 'border-gray-300'
+                errors.dateBorrowed ? 'border-danger' : 'border-border'
               }`}
             />
             {errors.dateBorrowed && <p className="text-danger text-sm mt-1">{errors.dateBorrowed}</p>}
@@ -414,7 +414,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
                 value={formData.dueDate}
                 onChange={handleInputChange('dueDate')}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors ${
-                  errors.dueDate ? 'border-danger' : 'border-gray-300'
+                  errors.dueDate ? 'border-danger' : 'border-border'
                 }`}
               />
             )}
@@ -471,7 +471,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex-1 py-3 px-4 border border-border rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
         >
           Cancel
         </button>

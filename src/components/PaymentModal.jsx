@@ -128,7 +128,7 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
         </div>
 
         {/* Debt Summary */}
-        <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <div className="bg-bg rounded-lg p-4 mb-4">
           <h3 className="font-medium text-gray-800 mb-1">{customer.name}</h3>
           {isMultipleMode ? (
             <p className="text-sm text-gray-600 mb-2">

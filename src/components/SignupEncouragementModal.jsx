@@ -60,7 +60,7 @@ const SignupEncouragementModal = ({ isOpen, onClose, onSignupClick, customerCoun
           </div>
 
           {/* Current Progress */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <div className="bg-bg rounded-lg p-4 mb-6">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Your Progress</span>
               <span className="text-xs text-gray-500">Free Account</span>
