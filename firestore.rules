@@ -11,8 +11,17 @@ service cloud.firestore {
     }
     
     function validateUserDataUpdate(data) {
-      // STEP 5: Add size validation to user updates  
-      return validateUserSize(data);
+      // STEP 5: Add size validation to user updates + essential fields for migration
+      return (!data.keys().hasAny(['name']) || (data.name is string && data.name.size() >= 1 && data.name.size() <= 100)) &&
+             (!data.keys().hasAny(['isPro']) || data.isPro is bool) &&
+             (!data.keys().hasAny(['totalCustomers']) || data.totalCustomers is number) &&
+             (!data.keys().hasAny(['totalOwed']) || data.totalOwed is number) &&
+             (!data.keys().hasAny(['totalPaid']) || data.totalPaid is number) &&
+             (!data.keys().hasAny(['totalDebts']) || data.totalDebts is number) &&
+             (!data.keys().hasAny(['lastActive']) || (data.lastActive is string || data.lastActive is timestamp)) &&
+             (!data.keys().hasAny(['migratedAt']) || (data.migratedAt is string || data.migratedAt is timestamp)) &&
+             (!data.keys().hasAny(['updatedAt']) || (data.updatedAt is string || data.updatedAt is timestamp)) &&
+             validateUserSize(data);
     }
     
     function validateUserDataCreate(data) {
@@ -29,6 +38,16 @@ service cloud.firestore {
       return data.name is string && 
              data.name.size() >= 1 && 
              data.name.size() <= 100 &&
+             // Allow essential customer fields for proper sync
+             (!data.keys().hasAny(['phone']) || (data.phone == null || (data.phone is string && data.phone.size() <= 20))) &&
+             (!data.keys().hasAny(['createdAt']) || (data.createdAt is string || data.createdAt is timestamp)) &&
+             (!data.keys().hasAny(['totalOwed']) || data.totalOwed is number) &&
+             (!data.keys().hasAny(['totalPaid']) || data.totalPaid is number) &&
+             (!data.keys().hasAny(['activeDebts']) || data.activeDebts is number) &&
+             (!data.keys().hasAny(['status']) || data.status is string) &&
+             (!data.keys().hasAny(['lastPaymentDate']) || (data.lastPaymentDate == null || data.lastPaymentDate is string || data.lastPaymentDate is timestamp)) &&
+             (!data.keys().hasAny(['migratedAt']) || (data.migratedAt is string || data.migratedAt is timestamp)) &&
+             (!data.keys().hasAny(['updatedAt']) || (data.updatedAt is string || data.updatedAt is timestamp)) &&
              validateCustomerSize(data);
     }
     
@@ -47,6 +66,7 @@ service cloud.firestore {
              (!data.keys().hasAny(['payments']) || data.payments is list) &&
              (!data.keys().hasAny(['createdAt']) || (data.createdAt is string || data.createdAt is timestamp)) &&
              (!data.keys().hasAny(['updatedAt']) || (data.updatedAt is string || data.updatedAt is timestamp)) &&
+             (!data.keys().hasAny(['migratedAt']) || (data.migratedAt is string || data.migratedAt is timestamp)) &&
              validateDebtSize(data);
     }
     
@@ -121,26 +141,26 @@ service cloud.firestore {
     function validateCustomerSize(data) {
       // Customer documents: Individual field limits
       return (!data.keys().hasAny(['name']) || data.name.size() <= 100) &&
-             (!data.keys().hasAny(['phone']) || data.phone.size() <= 20) &&
-             (!data.keys().hasAny(['address']) || data.address.size() <= 200) &&
-             (!data.keys().hasAny(['notes']) || data.notes.size() <= 500);
+             (!data.keys().hasAny(['phone']) || (data.phone == null || data.phone.size() <= 20)) &&
+             (!data.keys().hasAny(['address']) || (data.address == null || data.address.size() <= 200)) &&
+             (!data.keys().hasAny(['notes']) || (data.notes == null || data.notes.size() <= 500));
     }
     
     function validateDebtSize(data) {
       // Debt documents: Individual field limits
-      return (!data.keys().hasAny(['description']) || data.description.size() <= 200) &&
-             (!data.keys().hasAny(['notes']) || data.notes.size() <= 300) &&
+      return (!data.keys().hasAny(['description']) || (data.description == null || data.description.size() <= 200)) &&
+             (!data.keys().hasAny(['notes']) || (data.notes == null || data.notes.size() <= 300)) &&
              (!data.keys().hasAny(['customerName']) || data.customerName.size() <= 100) &&
-             (!data.keys().hasAny(['reason']) || data.reason.size() <= 200) &&
+             (!data.keys().hasAny(['reason']) || (data.reason == null || data.reason.size() <= 200)) &&
              (!data.keys().hasAny(['customerId']) || data.customerId.size() <= 100);
     }
     
     function validateUserSize(data) {
       // User documents: Individual field limits (more generous for user profiles)
       return (!data.keys().hasAny(['name']) || data.name.size() <= 100) &&
-             (!data.keys().hasAny(['phone']) || data.phone.size() <= 20) &&
-             (!data.keys().hasAny(['address']) || data.address.size() <= 200) &&
-             (!data.keys().hasAny(['bio']) || data.bio.size() <= 500);
+             (!data.keys().hasAny(['phone']) || (data.phone == null || data.phone.size() <= 20)) &&
+             (!data.keys().hasAny(['address']) || (data.address == null || data.address.size() <= 200)) &&
+             (!data.keys().hasAny(['bio']) || (data.bio == null || data.bio.size() <= 500));
     }
     
     // User documents - STEP 4: Add rate limiting to user operations

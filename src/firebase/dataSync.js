@@ -12,7 +12,7 @@ const ValidationSchema = {
   // Local debt schema (before migration - no customerId yet)
   LocalDebt: {
     amount: { type: 'number', required: true, min: 0 },
-    reason: { type: 'string', required: false, maxLength: 200 }, // Optional in local data
+    reason: { type: 'string', required: true, maxLength: 200 },
     dateBorrowed: { type: 'string', required: false }, // Can be string or date in local data
     paid: { type: 'boolean', required: true }
   },
@@ -40,13 +40,13 @@ const validateData = (data, schema) => {
     const value = data[field]
     
     // Check required fields
-    if (fieldSchema.required && (value === undefined || value === null)) {
+    if (fieldSchema.required && (value === undefined || value === null || value === '')) {
       errors.push(`Field '${field}' is required`)
       return
     }
     
-    // Skip validation if field is optional and not provided
-    if (!fieldSchema.required && (value === undefined || value === null)) {
+    // Skip validation if field is optional and not provided (including empty strings)
+    if (!fieldSchema.required && (value === undefined || value === null || value === '')) {
       return
     }
     

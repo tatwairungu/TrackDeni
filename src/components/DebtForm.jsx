@@ -87,9 +87,11 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
     if (!formData.amount || parseMonetaryAmount(formData.amount) <= 0) {
       newErrors.amount = 'Amount must be greater than 0'
     }
+    
     if (!formData.reason.trim()) {
       newErrors.reason = 'Reason is required'
     }
+    
     if (!formData.dateBorrowed) {
       newErrors.dateBorrowed = 'Date borrowed is required'
     }
@@ -149,7 +151,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
 
         customerIdToUse = await addCustomer({
           name: formData.name.trim(),
-          phone: includePhone ? formData.phone.trim() : ''
+          phone: includePhone ? formData.phone.trim() : null
         })
         
         // Check if customer creation failed due to limit
@@ -162,8 +164,8 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
       // Add debt to customer
       await addDebt(customerIdToUse, {
         amount: parseMonetaryAmount(formData.amount),
-        reason: formData.reason.trim(),
-        dateBorrowed: formData.dateBorrowed,
+        reason: formData.reason.trim(), // Remove fallback to null since reason is always required
+        dateBorrowed: formData.dateBorrowed || null,
         dueDate: includeDueDate ? formData.dueDate : null
       })
 
