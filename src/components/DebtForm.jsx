@@ -16,11 +16,14 @@ const propsAreEqual = (prevProps, nextProps) => {
   if (prevProps.initialData !== nextProps.initialData) return false
   if (prevProps.onSuccess !== nextProps.onSuccess) return false
   if (prevProps.onCancel !== nextProps.onCancel) return false
+  if (prevProps.user !== nextProps.user) return false
+  if (prevProps.signIn !== nextProps.signIn) return false
+  if (prevProps.signOut !== nextProps.signOut) return false
   
   return true
 }
 
-const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null }) => {
+const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, user, signIn, signOut }) => {
   const { 
     addCustomer, 
     addDebt, 
@@ -485,6 +488,9 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null }) 
       <UpgradePrompt 
         isOpen={showUpgradePrompt}
         onClose={hideUpgradePrompt}
+        user={user}
+        signIn={signIn}
+        signOut={signOut}
       />
     </form>
   )

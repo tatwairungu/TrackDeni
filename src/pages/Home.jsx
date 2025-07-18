@@ -455,6 +455,9 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
       <UpgradePrompt 
         isOpen={showUpgradePrompt}
         onClose={hideUpgradePrompt}
+        user={user}
+        signIn={signIn}
+        signOut={signOut}
       />
       
       {/* Pro Welcome Modal */}

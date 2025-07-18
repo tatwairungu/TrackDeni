@@ -1,22 +1,80 @@
 import { useState } from 'react'
 import useDebtStore from '../store/useDebtStore'
 import { t } from '../utils/localization'
+import LoginModal from './LoginModal'
+import SignupModal from './SignupModal'
 
-const UpgradePrompt = ({ isOpen, onClose }) => {
+const UpgradePrompt = ({ isOpen, onClose, user, signIn, signOut }) => {
   const { upgradeToProTier } = useDebtStore()
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(null) // null, 'login', 'signup'
 
   if (!isOpen) return null
 
   const handleUpgrade = () => {
+    // Check if user is authenticated
+    if (!user) {
+      // Show signup modal first for new users
+      setShowAuthModal('signup')
+      return
+    }
+
+    // User is authenticated, proceed to payment options
     setShowPaymentOptions(true)
   }
 
   const handleMockUpgrade = async () => {
-    // For demo purposes, we'll just upgrade the user
-    // In production, this would integrate with M-Pesa or other payment systems
-    await upgradeToProTier()
-    onClose()
+    // Double-check authentication before upgrading
+    if (!user) {
+      console.error('❌ Attempted upgrade without authentication')
+      setShowAuthModal('login')
+      return
+    }
+
+    try {
+      // For demo purposes, we'll just upgrade the user
+      // In production, this would integrate with M-Pesa or other payment systems
+      const result = await upgradeToProTier()
+      
+      if (result && result.success) {
+        console.log('✅ Pro upgrade successful')
+        onClose()
+      } else {
+        console.error('❌ Pro upgrade failed:', result?.error || 'Unknown error')
+        // If upgrade failed due to auth, show login modal
+        if (result?.error === 'Authentication required') {
+          setShowAuthModal('login')
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error during Pro upgrade:', error)
+      // If there's any error, show login modal as fallback
+      setShowAuthModal('login')
+    }
+  }
+
+  const handleLoginSuccess = (authenticatedUser) => {
+    setShowAuthModal(null)
+    // Now that user is authenticated, show payment options
+    setShowPaymentOptions(true)
+  }
+
+  const handleSignupSuccess = (authenticatedUser) => {
+    setShowAuthModal(null)
+    // Now that user is authenticated, show payment options
+    setShowPaymentOptions(true)
+  }
+
+  const handleAuthModalClose = () => {
+    setShowAuthModal(null)
+  }
+
+  const showLoginModal = () => {
+    setShowAuthModal('login')
+  }
+
+  const showSignupModal = () => {
+    setShowAuthModal('signup')
   }
 
   const benefits = [
@@ -67,6 +125,23 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
               <p className="text-gray-600">You've reached the free tier limit of 5 customers</p>
             </div>
 
+            {/* Authentication requirement notice */}
+            {!user && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-3">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-600 text-sm">🔒</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-800 text-sm">Account Required</h3>
+                    <p className="text-blue-700 text-xs mt-1">
+                      Pro features require an account to sync your data across devices and provide unlimited customer tracking.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 mb-6">
               <div className="flex items-center space-x-2 mb-2">
                 <span className="text-accent">💰</span>
@@ -105,7 +180,7 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
                 onClick={handleUpgrade}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-semibold"
               >
-                Upgrade Now
+                {user ? 'Upgrade Now' : 'Create Account & Upgrade'}
               </button>
             </div>
 
@@ -123,6 +198,18 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
               <h2 className="text-2xl font-bold text-text mb-2">Choose Payment Method</h2>
               <p className="text-gray-600">Complete your upgrade to TrackDeni Pro</p>
             </div>
+
+            {/* User confirmation */}
+            {user && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-6">
+                <div className="flex items-center space-x-2">
+                  <span className="text-green-600">✅</span>
+                  <span className="text-green-800 text-sm font-medium">
+                    Logged in as {user.displayName || user.email || 'User'}
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4 mb-6">
               <button
@@ -189,6 +276,21 @@ const UpgradePrompt = ({ isOpen, onClose }) => {
         )}
         </div>
       </div>
+
+      {/* Authentication Modals */}
+      <LoginModal
+        isOpen={showAuthModal === 'login'}
+        onClose={handleAuthModalClose}
+        onSignupClick={showSignupModal}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
+      <SignupModal
+        isOpen={showAuthModal === 'signup'}
+        onClose={handleAuthModalClose}
+        onLoginClick={showLoginModal}
+        onSignupSuccess={handleSignupSuccess}
+      />
     </>
   )
 }

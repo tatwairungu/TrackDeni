@@ -557,6 +557,27 @@ const useDebtStore = create(
       },
 
       upgradeToProTier: async () => {
+        // Critical security check: Ensure user is authenticated before upgrade
+        try {
+          const { auth } = await import('../firebase/config.js')
+          
+          if (!auth.currentUser) {
+            console.error('❌ Attempted Pro upgrade without authentication')
+            set({ 
+              error: 'Authentication required for Pro upgrade. Please log in first.',
+              showUpgradePrompt: false 
+            })
+            return { success: false, error: 'Authentication required' }
+          }
+        } catch (error) {
+          console.error('❌ Failed to check authentication status:', error)
+          set({ 
+            error: 'Unable to verify authentication. Please try again.',
+            showUpgradePrompt: false 
+          })
+          return { success: false, error: 'Authentication check failed' }
+        }
+
         // Update local state first
         set({ 
           userTier: 'pro',
@@ -607,6 +628,8 @@ const useDebtStore = create(
           console.error('❌ Failed to sync Pro upgrade to Firestore:', error)
           // Don't throw - local upgrade still works
         }
+        
+        return { success: true }
       },
 
       // Upgrade prompt management

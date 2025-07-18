@@ -84,6 +84,9 @@ const AddDebt = ({ customerId, onBack, onSuccess, user, signIn, signOut }) => {
           customerId={customerId}
           onSuccess={handleSuccess}
           onCancel={onBack}
+          user={user}
+          signIn={signIn}
+          signOut={signOut}
         />
       </div>
     </div>

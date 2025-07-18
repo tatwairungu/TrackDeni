@@ -87,8 +87,33 @@ function App() {
         
         // Direct upgrade to Pro
         upgradeToPro: async () => {
-          await store.upgradeToProTier()
-          console.log('⬆️ Upgraded to Pro tier')
+          const result = await store.upgradeToProTier()
+          if (result.success) {
+            console.log('⬆️ Upgraded to Pro tier')
+          } else {
+            console.log('❌ Pro upgrade failed:', result.error)
+          }
+        },
+        
+        // Test auth-protected upgrade flow
+        testAuthProtectedUpgrade: async () => {
+          console.log('🧪 Testing auth-protected upgrade flow...')
+          
+          // First, ensure user is signed out
+          const { auth } = await import('./firebase/config.js')
+          if (auth.currentUser) {
+            console.log('👤 User is signed in, testing upgrade...')
+          } else {
+            console.log('🔓 User is not signed in, testing blocked upgrade...')
+          }
+          
+          const result = await store.upgradeToProTier()
+          
+          if (result.success) {
+            console.log('✅ Upgrade successful (user was authenticated)')
+          } else {
+            console.log('❌ Upgrade blocked:', result.error)
+          }
         },
         
         // Reset to free tier
