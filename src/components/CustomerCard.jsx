@@ -1,27 +1,19 @@
 import { useState, memo } from 'react'
 import { getDebtStatus, getStatusColor, getStatusText, formatDateShort } from '../utils/dateUtils'
 import useDebtStore from '../store/useDebtStore'
-import { createPreloadableLazyComponent } from '../utils/LazyComponent'
 import { useAnimationClasses } from '../utils/liteModeStyles'
-
-// Lazy load PaymentModal since it's only needed when user clicks "Pay"
-const PaymentModal = createPreloadableLazyComponent(
-  () => import('./PaymentModal'),
-  { inline: true, size: 'small' }
-)
 
 // Custom comparison function for React.memo
 const propsAreEqual = (prevProps, nextProps) => {
   // Compare customer object
   if (prevProps.customer !== nextProps.customer) return false
   if (prevProps.onClick !== nextProps.onClick) return false
+  if (prevProps.onPaymentClick !== nextProps.onPaymentClick) return false
   
   return true
 }
 
-const CustomerCard = memo(({ customer, onClick }) => {
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [selectedDebt, setSelectedDebt] = useState(null)
+const CustomerCard = memo(({ customer, onClick, onPaymentClick }) => {
   const { getCustomerDebtSummary } = useDebtStore()
   const summary = getCustomerDebtSummary(customer.id)
   const animationClasses = useAnimationClasses()
@@ -49,7 +41,8 @@ const CustomerCard = memo(({ customer, onClick }) => {
   const statusColor = getStatusColor(status)
 
   const handleSendSMS = (e) => {
-    e.stopPropagation() // Prevent card click
+    e.preventDefault()
+    e.stopPropagation()
     
     if (!customer.phone) {
       alert('No phone number available for this customer')
@@ -66,17 +59,12 @@ const CustomerCard = memo(({ customer, onClick }) => {
   }
 
   const handleRecordPayment = (e) => {
-    e.stopPropagation() // Prevent card click
+    e.preventDefault()
+    e.stopPropagation()
     
-    if (urgentDebt) {
-      setSelectedDebt(urgentDebt)
-      setShowPaymentModal(true)
+    if (urgentDebt && onPaymentClick) {
+      onPaymentClick(customer, urgentDebt)
     }
-  }
-
-  // Preload PaymentModal when user hovers over Pay button
-  const handlePayButtonHover = () => {
-    PaymentModal.preload()
   }
 
   return (
@@ -143,7 +131,6 @@ const CustomerCard = memo(({ customer, onClick }) => {
         {urgentDebt && (
           <button
             onClick={handleRecordPayment}
-            onMouseEnter={handlePayButtonHover}
             className={`bg-success text-white py-2 px-2 rounded-lg font-medium text-xs hover:bg-success/90 ${animationClasses.transition} ${animationClasses.focus}`}
           >
             Pay
@@ -170,17 +157,6 @@ const CustomerCard = memo(({ customer, onClick }) => {
           Add
         </button>
       </div>
-
-      {/* Payment Modal */}
-      <PaymentModal
-        customer={customer}
-        debt={selectedDebt}
-        isOpen={showPaymentModal}
-        onClose={() => {
-          setShowPaymentModal(false)
-          setSelectedDebt(null)
-        }}
-      />
     </div>
   )
 }, propsAreEqual)

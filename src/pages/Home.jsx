@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import useDebtStore from '../store/useDebtStore'
 import CustomerCard from '../components/CustomerCard'
 import Header from '../components/Header'
+import PaymentModal from '../components/PaymentModal'
 import PerformanceWarning from '../components/PerformanceWarning'
 import LiteModeIndicator from '../components/LiteModeIndicator'
 import StorageIndicator from '../components/StorageIndicator'
@@ -41,10 +42,29 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
     resetPagination
   } = useDebtStore()
   const [filter, setFilter] = useState('all') // all, overdue, due-soon, paid
+  
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState(null)
+  const [selectedDebt, setSelectedDebt] = useState(null)
 
   // Calculate totals
   const totalOwed = getTotalOwed()
   const totalPaid = getTotalPaid()
+
+  // Handle opening payment modal
+  const handleOpenPaymentModal = (customer, debt) => {
+    setSelectedCustomer(customer)
+    setSelectedDebt(debt)
+    setShowPaymentModal(true)
+  }
+
+  // Handle closing payment modal
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false)
+    setSelectedCustomer(null)
+    setSelectedDebt(null)
+  }
 
   // Filter customers based on their most urgent debt status
   const filteredCustomers = useMemo(() => {
@@ -405,6 +425,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
                     key={customer.id}
                     customer={customer}
                     onClick={onNavigateToCustomer}
+                    onPaymentClick={handleOpenPaymentModal}
                   />
                 ))}
               </div>
@@ -465,6 +486,16 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
         isOpen={showProWelcome}
         onClose={hideProWelcomeModal}
       />
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedCustomer && selectedDebt && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={handleClosePaymentModal}
+          customer={selectedCustomer}
+          debt={selectedDebt}
+        />
+      )}
     </div>
   )
 }

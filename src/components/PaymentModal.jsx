@@ -10,10 +10,9 @@ const parseMonetaryAmount = (amount) => {
 // Custom comparison function for React.memo
 const propsAreEqual = (prevProps, nextProps) => {
   // Compare essential props for payment modal
-  if (prevProps.customer !== nextProps.customer) return false
-  if (prevProps.debt !== nextProps.debt) return false
+  if (prevProps.customer?.id !== nextProps.customer?.id) return false
+  if (prevProps.debt?.id !== nextProps.debt?.id) return false
   if (prevProps.isOpen !== nextProps.isOpen) return false
-  if (prevProps.onClose !== nextProps.onClose) return false
   if (prevProps.allDebts !== nextProps.allDebts) return false
   
   return true
@@ -105,17 +104,17 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
     <div 
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={(e) => {
-        e.stopPropagation()
         if (e.target === e.currentTarget) {
-          onClose() // Close when clicking backdrop
+          onClose()
         }
       }}
     >
       <div 
-        className="bg-white rounded-lg max-w-md w-full p-6"
+        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-4">
+        {/* Fixed Header */}
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100">
           <h2 className="text-xl font-semibold text-text">Record Payment</h2>
           <button
             onClick={onClose}
@@ -127,79 +126,80 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Debt Summary */}
-        <div className="bg-bg rounded-lg p-4 mb-4">
-          <h3 className="font-medium text-gray-800 mb-1">{customer.name}</h3>
-          {isMultipleMode ? (
-            <p className="text-sm text-gray-600 mb-2">
-              {targetDebts.length} outstanding debt{targetDebts.length > 1 ? 's' : ''}
-            </p>
-          ) : (
-            <p className="text-sm text-gray-600 mb-2">{debt.reason}</p>
-          )}
-          
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="text-gray-500">{isMultipleMode ? 'Total Owed:' : 'Original:'}</span>
-              <p className="font-medium">
-                KES {isMultipleMode ? totalOwedAcrossDebts.toLocaleString() : debt.amount.toLocaleString()}
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {/* Debt Summary */}
+          <div className="bg-bg rounded-lg p-4 mb-4">
+            <h3 className="font-medium text-gray-800 mb-1">{customer.name}</h3>
+            {isMultipleMode ? (
+              <p className="text-sm text-gray-600 mb-2">
+                {targetDebts.length} outstanding debt{targetDebts.length > 1 ? 's' : ''}
               </p>
-            </div>
-            <div>
-              <span className="text-gray-500">Paid:</span>
-              <p className="font-medium text-success">
-                KES {isMultipleMode ? 
-                  (targetDebts.reduce((sum, d) => sum + (d.payments?.reduce((s, p) => s + p.amount, 0) || 0), 0)).toLocaleString() :
-                  singleDebtPaid.toLocaleString()
-                }
-              </p>
-            </div>
-            <div>
-              <span className="text-gray-500">Remaining:</span>
-              <p className="font-medium text-danger">KES {remainingAmount.toLocaleString()}</p>
-            </div>
-          </div>
-
-          {/* Show debt breakdown for multiple mode */}
-          {isMultipleMode && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <p className="text-xs font-medium text-gray-700 mb-2">Debt Breakdown:</p>
-              <div className="space-y-1 max-h-20 overflow-y-auto">
-                {targetDebts.map(d => {
-                  const paid = d.payments?.reduce((s, p) => s + p.amount, 0) || 0
-                  const remaining = d.amount - paid
-                  return (
-                    <div key={d.id} className="flex justify-between text-xs">
-                      <span className="truncate">{d.reason}</span>
-                      <span className="font-medium">KES {remaining.toLocaleString()}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Smart Payment Info */}
-        {hasOtherDebts && paymentType === 'partial' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            ) : (
+              <p className="text-sm text-gray-600 mb-2">{debt.reason}</p>
+            )}
+            
+            <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-blue-800 text-sm font-medium">Smart Payment System</p>
-                <p className="text-blue-700 text-xs">
-                  If you pay more than owed, excess will automatically clear other outstanding debts first, then create store credit.
+                <span className="text-gray-500">{isMultipleMode ? 'Total Owed:' : 'Original:'}</span>
+                <p className="font-medium">
+                  KES {isMultipleMode ? totalOwedAcrossDebts.toLocaleString() : debt.amount.toLocaleString()}
                 </p>
               </div>
+              <div>
+                <span className="text-gray-500">Paid:</span>
+                <p className="font-medium text-success">
+                  KES {isMultipleMode ? 
+                    (targetDebts.reduce((sum, d) => sum + (d.payments?.reduce((s, p) => s + p.amount, 0) || 0), 0)).toLocaleString() :
+                    singleDebtPaid.toLocaleString()
+                  }
+                </p>
+              </div>
+              <div>
+                <span className="text-gray-500">Remaining:</span>
+                <p className="font-medium text-danger">KES {remainingAmount.toLocaleString()}</p>
+              </div>
             </div>
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Show debt breakdown for multiple mode */}
+            {isMultipleMode && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs font-medium text-gray-700 mb-2">Debt Breakdown:</p>
+                <div className="space-y-1 max-h-20 overflow-y-auto">
+                  {targetDebts.map(d => {
+                    const paid = d.payments?.reduce((s, p) => s + p.amount, 0) || 0
+                    const remaining = d.amount - paid
+                    return (
+                      <div key={d.id} className="flex justify-between text-xs">
+                        <span className="truncate">{d.reason}</span>
+                        <span className="font-medium">KES {remaining.toLocaleString()}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Smart Payment Info */}
+          {hasOtherDebts && paymentType === 'partial' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="text-blue-800 text-sm font-medium">Smart Payment System</p>
+                  <p className="text-blue-700 text-xs">
+                    If you pay more than owed, excess will automatically clear other outstanding debts first, then create store credit.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Payment Type */}
-          <div>
+          <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Payment Type</label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -229,7 +229,7 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
 
           {/* Payment Amount (only for partial) */}
           {paymentType === 'partial' && (
-            <div>
+            <div className="mb-4">
               <label htmlFor="paymentAmount" className="block text-sm font-medium text-gray-700 mb-1">
                 Payment Amount (KES) *
               </label>
@@ -240,20 +240,6 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
                 step="0.01"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
-                onWheel={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                }}
-                onKeyDown={(e) => {
-                  // Prevent arrow keys from changing the value
-                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }
-                }}
-                style={{
-                  MozAppearance: 'textfield' // Firefox
-                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
                 placeholder={`Owed: ${remainingAmount.toLocaleString()} ${hasOtherDebts ? '(overpayment clears other debts)' : '(overpayment creates credit)'}`}
                 required
@@ -269,7 +255,7 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
 
           {/* Full Payment Confirmation */}
           {paymentType === 'full' && (
-            <div className="bg-success/10 border border-success/20 rounded-lg p-3">
+            <div className="bg-success/10 border border-success/20 rounded-lg p-3 mb-4">
               <p className="text-success text-sm">
                 {isMultipleMode ? 
                   `This will mark all ${targetDebts.length} outstanding debts as paid in full (KES ${remainingAmount.toLocaleString()}).` :
@@ -281,7 +267,7 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-danger/10 border border-danger/20 rounded-lg p-3">
+            <div className="bg-danger/10 border border-danger/20 rounded-lg p-3 mb-4">
               <p className="text-danger text-sm">{error}</p>
             </div>
           )}
@@ -305,9 +291,11 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
               </div>
             </div>
           )}
+        </div>
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
+        {/* Fixed Footer with Buttons */}
+        <div className="border-t border-gray-100 p-6 pt-4">
+          <form onSubmit={handleSubmit} className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -327,8 +315,8 @@ const PaymentModal = memo(({ customer, debt, allDebts, isOpen, onClose }) => {
               {isLoading ? 'Recording...' : 
                paymentType === 'full' ? 'Mark as Paid' : 'Record Payment'}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   )
