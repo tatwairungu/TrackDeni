@@ -14,7 +14,7 @@ const SimpleToggle = ({ enabled, onToggle, label, className = "" }) => {
         minWidth: '44px',     // Override global min-width
         minHeight: '24px',    // Override global min-height
         borderRadius: '12px',
-        backgroundColor: enabled ? '#10b981' : '#d1d5db',
+        backgroundColor: enabled ? '#27AE60' : '#d1d5db',
         transition: 'background-color 0.2s ease-in-out',
         cursor: 'pointer',
         border: 'none',

@@ -122,7 +122,7 @@ const UpgradePrompt = ({ isOpen, onClose, user, signIn, signOut }) => {
                 <span className="text-2xl">🚀</span>
               </div>
               <h2 className="text-2xl font-bold text-text mb-2">Upgrade to Pro</h2>
-              <p className="text-gray-600">You've reached the free tier limit of 5 customers</p>
+              <p className="text-text-light">You've reached the free tier limit of 5 customers</p>
             </div>
 
             {/* Authentication requirement notice */}
@@ -172,7 +172,7 @@ const UpgradePrompt = ({ isOpen, onClose, user, signIn, signOut }) => {
             <div className="flex space-x-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-border rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Maybe Later
               </button>

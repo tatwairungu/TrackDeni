@@ -222,7 +222,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
             <div className="flex items-center space-x-2">
               {isFreeTier() ? (
                 <>
-                  <span className="text-sm text-gray-600">Free Tier</span>
+                  <span className="text-sm text-text-light">Free Tier</span>
                   <button
                     onClick={showUpgradeModal}
                     className="text-sm text-primary hover:text-primary/80 underline"
@@ -235,7 +235,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
                   <div className="inline-flex items-center gap-1 bg-gradient-to-r from-primary to-success px-3 py-1 rounded-full">
                     <span className="text-white text-sm font-semibold">✨ PRO</span>
                   </div>
-                  <span className="text-sm text-gray-600">Member</span>
+                  <span className="text-sm text-text-light">Member</span>
                 </div>
               )}
             </div>
@@ -245,23 +245,23 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
               <p className="text-2xl font-bold text-danger">
                 KES {totalOwed.toLocaleString()}
               </p>
-              <p className="text-sm text-gray-600">Total Owed</p>
+              <p className="text-sm text-text-light">Total Owed</p>
             </div>
             <div className="text-center p-4 bg-success/10 rounded-lg">
               <p className="text-2xl font-bold text-success">
                 KES {totalPaid.toLocaleString()}
               </p>
-              <p className="text-sm text-gray-600">Total Paid</p>
+              <p className="text-sm text-text-light">Total Paid</p>
             </div>
             <div className="text-center p-4 bg-primary/10 rounded-lg lg:block">
               <p className="text-2xl font-bold text-primary">
                 {customers.length}
-                {isFreeTier() && <span className="text-sm text-gray-600">/{getCustomerLimit()}</span>}
+                {isFreeTier() && <span className="text-sm text-text-light">/{getCustomerLimit()}</span>}
                 {!isFreeTier() && (
                   <span className="text-xs text-success ml-1">∞</span>
                 )}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-text-light">
                 {isFreeTier() ? 'Customers Used' : 'Active Customers'}
               </p>
               {!isFreeTier() && (
@@ -281,7 +281,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
                       ? 'Free tier limit reached!' 
                       : `Only ${getRemainingCustomerSlots()} customer slot remaining`}
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-text-light">
                     {getRemainingCustomerSlots() === 0 
                       ? 'Upgrade to Pro to add more customers' 
                       : 'Upgrade to Pro for unlimited customers'}
@@ -300,7 +300,7 @@ const Home = ({ onNavigateToAddDebt, onNavigateToCustomer, user, signIn, signOut
                   <p className="text-sm font-semibold text-primary">
                     Growing strong with {customers.length} customers!
                   </p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-text-light">
                     No limits with TrackDeni Pro - keep adding more customers as you grow!
                   </p>
                 </div>

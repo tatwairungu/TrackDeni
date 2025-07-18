@@ -89,7 +89,7 @@ const CustomerCard = memo(({ customer, onClick }) => {
         <div className="flex-1">
           <h3 className="font-semibold text-lg text-text mb-1">{customer.name}</h3>
           {customer.phone && (
-            <p className="text-sm text-gray-600">{customer.phone}</p>
+            <p className="text-sm text-text-light">{customer.phone}</p>
           )}
         </div>
         
@@ -128,7 +128,7 @@ const CustomerCard = memo(({ customer, onClick }) => {
 
       {/* Most urgent debt details */}
       {urgentDebt && (
-        <div className="bg-gray-50 rounded-lg p-3 mb-3">
+        <div className="bg-bg rounded-lg p-3 mb-3">
           <p className="text-sm font-medium text-gray-800">
             {urgentDebt.reason}
           </p>

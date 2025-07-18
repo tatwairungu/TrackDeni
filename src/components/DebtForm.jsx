@@ -261,7 +261,7 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
               value={formData.name}
               onChange={handleInputChange('name')}
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary ${
-                errors.name ? 'border-danger' : 'border-gray-300'
+                errors.name ? 'border-danger' : 'border-border'
               }`}
               placeholder="Enter customer name"
             />
@@ -270,11 +270,11 @@ const DebtForm = memo(({ customerId, onSuccess, onCancel, initialData = null, us
 
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="phone" className="block text-sm font-medium text-text-light">
                 Phone Number {includePhone && <span className="text-red-500">*</span>}
               </label>
               <div className="flex items-center gap-3">
-                <span className={`text-sm transition-colors ${includePhone ? 'text-gray-600' : 'text-gray-400'}`}>
+                <span className={`text-sm transition-colors ${includePhone ? 'text-text-light' : 'text-text-muted'}`}>
                   {includePhone ? 'Required' : 'Optional'}
                 </span>
                 <SimpleToggle
