@@ -139,6 +139,13 @@ export default defineConfig({
     __VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
   },
   
+  // Test configuration
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/tests/setupTests.js',
+  },
+  
   // Base path for deployment
   base: '/',
 })
