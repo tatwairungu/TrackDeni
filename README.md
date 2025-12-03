@@ -56,25 +56,6 @@ A modern Progressive Web App (PWA) designed to help small business owners and sh
 
 ## 🚀 Quick Start
 
-### ⚠️ Setup Not Available
-
-**This application cannot be run from this repository.**
-
-The Firebase configuration file (`src/firebase/config.js`) and other required credentials are intentionally excluded to protect intellectual property.
-
-**For Academic Reviewers:**
-- Review the code structure in the `/src` directory
-- Examine test files in `/src/tests`
-- Check component architecture in `/src/components`
-- See `SETUP.md` for more details
-
-**Why can't I run this?**
-- Firebase credentials are not included in the repository
-- The backend configuration is proprietary
-- This ensures the app cannot be copied or misused
-- See the [LICENSE](LICENSE) file for terms
-
-## 📦 Available Scripts
 
 ```bash
 # Development
