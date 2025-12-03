@@ -16,7 +16,7 @@ A modern Progressive Web App (PWA) designed to help small business owners and sh
 - ❌ Firebase credentials are **INTENTIONALLY EXCLUDED**
 - 🔒 All rights reserved - See [LICENSE](LICENSE) for details
 
-**For setup limitations, see [SETUP.md](SETUP.md)**
+
 
 ---
 
