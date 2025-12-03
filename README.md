@@ -160,7 +160,7 @@ For licensing or partnership inquiries, please contact the author.
 
 **PROPRIETARY LICENSE - All Rights Reserved**
 
-This software is protected by copyright law. It is made publicly available solely for academic review and evaluation purposes.
+This software is protected by copyright law. It is made publicly available solely for academic review and for the purposes of evaluation.
 
 **You may NOT:**
 - Run, deploy, or use this software
