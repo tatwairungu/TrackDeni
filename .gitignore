@@ -31,8 +31,15 @@ Thumbs.db
 firebase-debug.log
 .firebase/
 
+# Firebase configuration (contains production credentials)
+src/firebase/config.js
+firebase.json
+.firebaserc
+
 # Markdown files (documentation) - keep local only
 # Ignore all .md files
 *.md
-# Except README.md
+# Except README.md and SETUP.md
 !README.md
+!SETUP.md
+!LICENSE

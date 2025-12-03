@@ -2,8 +2,23 @@
 
 A modern Progressive Web App (PWA) designed to help small business owners and shopkeepers easily track customer debts and payments. Built with React, Firebase, and optimized for offline use.
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://your-app-url.web.app)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
+[![Academic Review](https://img.shields.io/badge/status-Academic%20Review%20Only-orange.svg)](SETUP.md)
+
+---
+
+## ⚠️ IMPORTANT: PROPRIETARY SOFTWARE
+
+**This repository is made public for academic purposes only.**
+
+- ✅ You **CAN** view the code, tests, and architecture
+- ❌ You **CANNOT** run, deploy, or use this application
+- ❌ Firebase credentials are **INTENTIONALLY EXCLUDED**
+- 🔒 All rights reserved - See [LICENSE](LICENSE) for details
+
+**For setup limitations, see [SETUP.md](SETUP.md)**
+
+---
 
 ## 🌟 Features
 
@@ -41,39 +56,23 @@ A modern Progressive Web App (PWA) designed to help small business owners and sh
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Firebase account (for hosting and authentication)
+### ⚠️ Setup Not Available
 
-### Installation
+**This application cannot be run from this repository.**
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/trackdeni.git
-   cd trackdeni
-   ```
+The Firebase configuration file (`src/firebase/config.js`) and other required credentials are intentionally excluded to protect intellectual property.
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+**For Academic Reviewers:**
+- Review the code structure in the `/src` directory
+- Examine test files in `/src/tests`
+- Check component architecture in `/src/components`
+- See `SETUP.md` for more details
 
-3. **Set up Firebase**
-   - Create a Firebase project at [firebase.google.com](https://firebase.google.com)
-   - Enable Authentication (Phone, Email, Google)
-   - Enable Firestore Database
-   - Copy your Firebase config to `src/firebase/config.js`
-
-4. **Run development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open in browser**
-   ```
-   http://localhost:5173
-   ```
+**Why can't I run this?**
+- Firebase credentials are not included in the repository
+- The backend configuration is proprietary
+- This ensures the app cannot be copied or misused
+- See the [LICENSE](LICENSE) file for terms
 
 ## 📦 Available Scripts
 
@@ -170,17 +169,26 @@ TrackDeni/
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+**Contributions are NOT accepted at this time.**
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+This is proprietary software made public for academic review only. Pull requests will not be accepted.
+
+For licensing or partnership inquiries, please contact the author.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**PROPRIETARY LICENSE - All Rights Reserved**
+
+This software is protected by copyright law. It is made publicly available solely for academic review and evaluation purposes.
+
+**You may NOT:**
+- Run, deploy, or use this software
+- Copy or modify the code for other projects
+- Distribute or sublicense this software
+
+See the [LICENSE](LICENSE) file for complete terms.
+
+**Violation of these terms may result in legal action.**
 
 ## 👨‍💻 Author
 
@@ -196,7 +204,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions, issues, or feature requests:
 - Open an issue on GitHub
-- Email: your-email@example.com
+- Email: tatwairungu@icloud.com
 
 ---
 

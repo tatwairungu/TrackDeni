@@ -5,16 +5,19 @@ import { getAnalytics } from 'firebase/analytics'
 import { getPerformance } from 'firebase/performance'
 
 // Firebase configuration
-// Note: Firebase web API keys are public by design and safe to include in client code
-// Security comes from Firestore security rules, not from hiding these keys
+// NOTE: This is an example file. The actual config.js is not included in the repository.
+// To run this app, you need to:
+// 1. Create your own Firebase project at https://firebase.google.com
+// 2. Copy this file to config.js
+// 3. Replace the values below with your Firebase project credentials
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyA1hpmGX2RT8dZQOrtFY3GnRTd50g9zw4Q",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "trackdeni-prod.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "trackdeni-prod",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "trackdeni-prod.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "122292055518",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:122292055518:web:fa0e665c885f21c48d814f",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-K191DP0XGN"
+  apiKey: "YOUR_API_KEY_HERE",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.firebasestorage.app",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 }
 
 // Initialize Firebase
@@ -52,4 +55,5 @@ export const goOffline = () => disableNetwork(db)
 export const goOnline = () => enableNetwork(db)
 
 // Export the app for other Firebase services
-export default app 
+export default app
+
