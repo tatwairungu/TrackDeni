@@ -30,3 +30,9 @@ Thumbs.db
 # Firebase or backend secrets
 firebase-debug.log
 .firebase/
+
+# Markdown files (documentation) - keep local only
+# Ignore all .md files
+*.md
+# Except README.md
+!README.md
